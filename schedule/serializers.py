@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from . models import Enseignant, Salle
+from . models import Enseignant, Salle,Notification,Administrateur
 
 class EnseignantSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,4 +32,14 @@ class EnseignantGradeStatutSerializer(serializers.ModelSerializer):
         model = Enseignant
         fields = ['grade', 'statut'] 
 
+    
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        field = '__all__'
+
+class AdministrateurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Administrateur
+        field= '__all__'
 

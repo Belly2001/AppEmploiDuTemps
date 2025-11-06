@@ -7,8 +7,8 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 
 
-from .models import Enseignant, Salle
-from .serializers import EnseignantSerializer , SalleSerializer, EnseignantGradeStatutSerializer
+from .models import Enseignant, Salle,Notification
+from .serializers import *
 
 
 # Create your views here.
@@ -45,6 +45,25 @@ def retourner_salles(request):
     serializerSalle = SalleSerializer(salle,many=True)
     return Response(serializerSalle.data)
 
+#fonction permettant de retourner uniquement les salles disponibles
+@api_view(['GET'])
+def retourner_salles_disponibles(request):
+    salles_dispo = Salle.objects.filter(est_disponible=True)
+    serializerSalle= SalleSerializer(salles_dispo,many=True)
+    return Response(serializerSalle.data)
+
+
+    
+
+
+
+
+
+#fonction permettant à l'administrateur d'envoyer une notificaiton
+def envoyer_notification():
+    pass
+
+
 
 #fonction permettant de stocker et envoyer une notification
 
@@ -54,8 +73,16 @@ ensuite stockée dans la bd et celle ci est automatiquement envoyée
 à celui qu'il a défini : tous les enseignants , a un enseignant en particulier
 """
 @api_view(['POST'])
-def gerer_notification():
-    pass
+def gerer_notification(request):
+    serializerNotif = NotificationSerializer(data=request.data)
+    if serializerNotif.is_valid():
+        serializerNotif.save()
+        return Response(serializerNotif.data,status=status.HTTP_201_CREATED)
+  
+    return Response(serializerNotif.errors,status=status.HTTP_400_BAD_REQUEST)
+    
+
+
 
 
 #fonction permettant de supprimer un Enseignant
@@ -75,6 +102,9 @@ class EnseignantGradeStatusUpdateView(generics.UpdateAPIView):
     queryset = Enseignant.objects.all()
     serializer_class = EnseignantGradeStatutSerializer
     lookup_field = 'id_enseignant'
+
+
+
 
 
 @api_view(['PUT'])  
@@ -100,4 +130,35 @@ def modifier_infos_enseignant(request,id):
     return Response(serializerEns.data,status=status.HTTP_200_OK)
 
 
+
+
+#Cote enseignant
+
+#fonction permettant d'afficher les notifications que a reçu un enseignant 
+
+@api_view(['GET'])
+def afficher_notifications_enseignant(request,id):
+    #chercher parmi toutes les notifs de la base celles de l'enseignant spécifique (avec son id)
+
+    notifications = Notification.objects.filter(id_enseignant=id)
+
+    #si il n'ya pas de notifications
+    if not notifications.exists():
+        #on retourne un message disant qu'il n'y en a pas
+        return Response({'message': 'Aucune notification'}, status=status.HTTP_404_NOT_FOUND)
+    #sinon on rentre jamais dans le if et on recupère le titre et le message de la table notifcaiton
+    data = [ #création d'une liste contenant seulement le titre et le message de la notif
+        {
+            'titre': notif.titre,
+            'message': notif.message,
+        }
+        for notif in notifications
+    ]
+    #on retourne la reponse sous forme de fichier json visible sur l'api view du restframework
+
+    return Response(data,status=status.HTTP_200_OK) #le statut ici permet de dire que la demande a bien fonctionée
     
+
+
+
+

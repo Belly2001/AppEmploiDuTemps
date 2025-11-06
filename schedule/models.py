@@ -121,7 +121,8 @@ class Salle(models.Model):
     capacite = models.IntegerField(blank=True, null=True)
     type_salle = models.CharField(max_length=50, blank=True, null=True)
     localisation = models.CharField(max_length=100, blank=True, null=True)
-
+    est_disponible = models.BooleanField(default=True)
+ 
     class Meta:
         managed = False
         db_table = 'salle'
