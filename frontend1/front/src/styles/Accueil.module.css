@@ -1,0 +1,195 @@
+/* ========== LANDING PAGE SIMPLE ========== */
+.landingPage {
+  background-image: url("/photoEmp.jpg");
+  background-size: cover;
+  background-position: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding: 0;
+  margin: 0;
+}
+
+/* Overlay sombre pour meilleure lisibilité */
+.landingPage::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 0;
+}
+
+.landingPage > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ========== NAVIGATION AVEC ANIMATION ========== */
+.nav {
+  display: flex;
+  gap: 15px;
+  padding: 30px;
+  justify-content: flex-start;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.navButton {
+  padding: 12px 24px;
+  background-color: transparent;
+  color: white;
+  border: 2px solid white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.navButton:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-3px);
+}
+
+/* ========== SECTION HERO (CENTRÉ) ========== */
+.heroSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 30px;
+  padding: 40px 20px;
+}
+
+/* ========== TITRE PRINCIPAL AVEC ANIMATION ========== */
+.mainTitle {
+  font-size: 100px;
+  font-family: 'Lucida Handwriting', cursive;
+  font-weight: bold;
+  color: white;
+  margin: 0;
+  text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.8);
+  line-height: 1.2;
+  animation: fadeInDown 0.5s ease-out;
+}
+
+/* ========== SOUS-TITRE AVEC ANIMATION ========== */
+.subtitle {
+  font-size: 28px;
+  font-weight: 400;
+  color: white;
+  margin: 0;
+  max-width: 800px;
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8);
+  line-height: 1.5;
+  animation: fadeInUp 0.5s ease-out 0.2s both;
+}
+
+/* ========== GROS BOUTON CTA AVEC ANIMATION ========== */
+.ctaButton {
+  padding: 20px 60px;
+  font-size: 24px;
+  font-weight: bold;
+  background-color: white;
+  color: #191921;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  margin-top: 20px;
+  animation: fadeInUp 0.5s ease-out 0.4s both;
+}
+
+.ctaButton:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
+}
+
+.ctaButton:active {
+  transform: translateY(-2px) scale(1.02);
+}
+
+/* ========== DÉFINITION DES ANIMATIONS ========== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .nav {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 20px;
+  }
+
+  .navButton {
+    font-size: 14px;
+    padding: 10px 18px;
+  }
+
+  .mainTitle {
+    font-size: 60px;
+  }
+
+  .subtitle {
+    font-size: 20px;
+    padding: 0 20px;
+  }
+
+  .ctaButton {
+    padding: 16px 40px;
+    font-size: 20px;
+  }
+
+  .heroSection {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mainTitle {
+    font-size: 45px;
+  }
+
+  .subtitle {
+    font-size: 18px;
+  }
+
+  .ctaButton {
+    padding: 14px 35px;
+    font-size: 18px;
+  }
+}
