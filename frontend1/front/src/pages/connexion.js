@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/router'
+import Link from 'next/link'
+import styles from '@/styles/Connexion.module.css'
 
 export default function Connexion() {
   const [email, setEmail] = useState('')
@@ -8,83 +10,123 @@ export default function Connexion() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    console.log('Connexion:', { email, password })
     // Logique de connexion ici
-    console.log('Email:', email, 'Password:', password)
+    // router.push('/enseignant') // Redirection après connexion
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      background: 'linear-gradient(to right top, #191921, #aac3ce)'
-    }}>
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.9)',
-        padding: '40px',
-        borderRadius: '12px',
-        width: '400px',
-        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.3)'
-      }}>
-        <h1 style={{ textAlign: 'center', marginBottom: '30px', color: '#333' }}>
-          Connexion
-        </h1>
+    <div className={styles.connexionPage}>
+      {/* Navigation retour */}
+      <nav className={styles.nav}>
+        <Link href="/">
+          <button className={styles.backButton}>← Retour</button>
+        </Link>
+      </nav>
+
+      {/* Container principal avec 2 colonnes */}
+      <div className={styles.mainContainer}>
         
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', color: '#333' }}>
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: '6px',
-                border: '1px solid #ccc'
-              }}
-              required
-            />
-          </div>
+{/* SECTION GAUCHE - Slogans et présentation */}
+<div className={styles.leftSection}>
+  <div className={styles.brandSection}>
+    <h1 className={styles.brandTitle}>Schedule APP</h1>
+    <div className={styles.divider}></div>
+    <p className={styles.brandSlogan}>
+      Optimisez votre temps, simplifiez votre vie
+    </p>
+  </div>
 
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', color: '#333' }}>
-              Mot de passe
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: '6px',
-                border: '1px solid #ccc'
-              }}
-              required
-            />
-          </div>
+  <div className={styles.featuresSection}>
+    <div className={styles.feature}>
+      <div className={styles.featureIcon}>⚡</div>
+      <div>
+        <h3 className={styles.featureTitle}>Rapide et intuitif</h3>
+        <p className={styles.featureText}>
+          Créez vos emplois du temps en quelques clics
+        </p>
+      </div>
+    </div>
 
-          <button
-            type="submit"
-            style={{
-              width: '100%',
-              padding: '14px',
-              background: '#191921',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '16px',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            Se connecter
-          </button>
-        </form>
+    <div className={styles.feature}>
+      <div className={styles.featureIcon}>🎯</div>
+      <div>
+        <h3 className={styles.featureTitle}>Intelligent</h3>
+        <p className={styles.featureText}>
+          Optimisation automatique des créneaux horaires
+        </p>
+      </div>
+    </div>
+
+    <div className={styles.feature}>
+      <div className={styles.featureIcon}>🔔</div>
+      <div>
+        <h3 className={styles.featureTitle}>Notifications</h3>
+        <p className={styles.featureText}>
+          Restez informé des changements en temps réel
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <p className={styles.quote}>
+    "La meilleure façon de gérer son temps, c'est de le planifier intelligemment"
+  </p>
+</div>
+
+        {/* SECTION DROITE - Formulaire */}
+        <div className={styles.rightSection}>
+          <div className={styles.formBox}>
+            <h1 className={styles.title}>Connexion</h1>
+            <p className={styles.subtitle}>Accédez à votre espace</p>
+
+            <form onSubmit={handleSubmit} className={styles.form}>
+              {/* Email */}
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={styles.input}
+                  placeholder="votre.email@exemple.com"
+                  required
+                />
+              </div>
+
+              {/* Mot de passe */}
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>Mot de passe</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={styles.input}
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+
+              {/* Mot de passe oublié */}
+              <div className={styles.forgotPassword}>
+                <a href="#">Mot de passe oublié ?</a>
+              </div>
+
+              {/* Bouton Se connecter */}
+              <button type="submit" className={styles.submitButton}>
+                Se connecter
+              </button>
+
+              {/* Lien inscription */}
+              <p className={styles.signupText}>
+                Pas encore de compte ?{' '}
+                <Link href="/inscription" className={styles.signupLink}>
+                  Créer un compte
+                </Link>
+              </p>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   )
