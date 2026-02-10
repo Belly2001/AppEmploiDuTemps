@@ -1,17 +1,4 @@
--- Database: Nada
 
--- DROP DATABASE IF EXISTS "Nada";
-
-CREATE DATABASE "Nada"
-    WITH
-    OWNER = postgres
-    ENCODING = 'UTF8'
-    LC_COLLATE = 'French_France.1252'
-    LC_CTYPE = 'French_France.1252'
-    LOCALE_PROVIDER = 'libc'
-    TABLESPACE = pg_default
-    CONNECTION LIMIT = -1
-    IS_TEMPLATE = False;
 
 --  TABLE 1 : ENSEIGNANT
 
@@ -67,6 +54,7 @@ CREATE TABLE cours (
     intitule VARCHAR(100) NOT NULL,
     heure_debut TIME NOT NULL,
     heure_fin TIME NOT NULL,
+	type str
     id_matiere VARCHAR(20) REFERENCES matiere(id_matiere) ON DELETE SET NULL,
     id_enseignant INT REFERENCES enseignant(id_enseignant) ON DELETE SET NULL,
     CHECK (heure_fin > heure_debut)
