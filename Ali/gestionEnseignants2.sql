@@ -1,7 +1,20 @@
+-- Database: Nada
 
+-- DROP DATABASE IF EXISTS "Nada";
 
---  TABLE 1 : ENSEIGNANT
-
+CREATE DATABASE "Nada"
+    WITH
+    OWNER = postgres
+    ENCODING = 'UTF8'
+    LC_COLLATE = 'French_France.1252'
+    LC_CTYPE = 'French_France.1252'
+    LOCALE_PROVIDER = 'libc'
+    TABLESPACE = pg_default
+    CONNECTION LIMIT = -1
+    IS_TEMPLATE = False;
+-- =========================================================
+-- 🔹 TABLE 1 : ENSEIGNANT
+-- =========================================================
 CREATE TABLE enseignant (
     id_enseignant SERIAL PRIMARY KEY,
     nom VARCHAR(100) NOT NULL,
@@ -13,9 +26,9 @@ CREATE TABLE enseignant (
     statut VARCHAR(20) DEFAULT 'Actif'
 );
 
-
---  TABLE 2 : ADMINISTRATEUR
-
+-- =========================================================
+-- 🔹 TABLE 2 : ADMINISTRATEUR
+-- =========================================================
 CREATE TABLE administrateur (
     id_admin SERIAL PRIMARY KEY,
     nom VARCHAR(100) NOT NULL,
@@ -26,9 +39,9 @@ CREATE TABLE administrateur (
     permissions TEXT
 );
 
-
---  TABLE 3 : MATIERE
-
+-- =========================================================
+-- 🔹 TABLE 3 : MATIERE
+-- =========================================================
 CREATE TABLE matiere (
     id_matiere VARCHAR(20) UNIQUE NOT NULL,
     nom_matiere VARCHAR(100) NOT NULL
@@ -52,17 +65,17 @@ CREATE TABLE salle (
 CREATE TABLE cours (
     num_cours SERIAL PRIMARY KEY,
     intitule VARCHAR(100) NOT NULL,
+	type_cours VARCHAR(30) NOT NULL,
     heure_debut TIME NOT NULL,
     heure_fin TIME NOT NULL,
-	type str
     id_matiere VARCHAR(20) REFERENCES matiere(id_matiere) ON DELETE SET NULL,
     id_enseignant INT REFERENCES enseignant(id_enseignant) ON DELETE SET NULL,
     CHECK (heure_fin > heure_debut)
 );
 
-
---  TABLE 6 : EMPLOI DU TEMPS
-
+-- =========================================================
+-- 🔹 TABLE 6 : EMPLOI DU TEMPS
+-- =========================================================
 CREATE TABLE emploi_du_temps (
     id_edt SERIAL PRIMARY KEY,
     num_cours INT REFERENCES cours(num_cours) ON DELETE CASCADE,
@@ -72,8 +85,9 @@ CREATE TABLE emploi_du_temps (
     statut VARCHAR(20) DEFAULT 'Planifié'
 );
 
---  TABLE 7 : DISPONIBILITE
-
+-- =========================================================
+-- 🔹 TABLE 7 : DISPONIBILITE
+-- =========================================================
 CREATE TABLE disponibilite (
     id_disponibilite SERIAL PRIMARY KEY,
     id_enseignant INT REFERENCES enseignant(id_enseignant) ON DELETE CASCADE,
@@ -99,76 +113,65 @@ CREATE TABLE notification (
     est_lue BOOLEAN DEFAULT FALSE
 );
 
-
---  TABLE 9 : ENSEIGNANT_MATIERE (relation N:M)
-
+-- =========================================================
+-- 🔹 TABLE 9 : ENSEIGNANT_MATIERE (relation N:M)
+-- =========================================================
 CREATE TABLE enseignant_matiere (
     id_enseignant INT REFERENCES enseignant(id_enseignant) ON DELETE CASCADE,
     id_matiere VARCHAR(20) REFERENCES matiere(id_matiere) ON DELETE CASCADE,
     PRIMARY KEY (id_enseignant, id_matiere)
 );
 
-
---  TABLE 10 : EQUIPEMENT_SALLE
-
+-- =========================================================
+-- 🔹 TABLE 10 : EQUIPEMENT_SALLE
+-- =========================================================
 CREATE TABLE equipement_salle (
     id_equipement SERIAL PRIMARY KEY,
     id_salle INT REFERENCES salle(id_salle) ON DELETE CASCADE,
     nom_equipement VARCHAR(100) NOT NULL,
     quantite INT DEFAULT 1 CHECK (quantite > 0)
 );
---ajout de l'attribut est_disponible pour suivre les salles disponibles
-ALTER TABLE salle
-ADD COLUMN est_disponible BOOLEAN DEFAULT TRUE;
 
 
-
---  TABLE ENSEIGNANT
-
+-- =========================================================
+-- 👩‍🏫 TABLE ENSEIGNANT
+-- =========================================================
 INSERT INTO enseignant (nom, prenom, email, mot_de_passe, grade, departement, statut)
 VALUES
 ('Sane', 'Moussa', 'moussa.sane@univ.com', 'azerty123', 'Maître de conférences', 'Informatique', 'Actif'),
-('Izere', 'Divan', 'divan.izere@univ.com', 'pass1234', 'Professeur', 'Mathématiques', 'Actif'),
+('Izere', 'Divin', 'divan.izere@univ.com', 'pass1234', 'Professeur', 'Mathématiques', 'Actif'),
 ('Ali', 'Hassane', 'hassane.ali@univ.com', 'admin123', 'Assistant', 'Physique', 'Actif');
 
-
-
-
-
-
-
-
-
-
---  TABLE ADMINISTRATEUR
-
+-- =========================================================
+-- 🧍‍♂️ TABLE ADMINISTRATEUR
+-- =========================================================
 INSERT INTO administrateur (nom, prenom, email, mot_de_passe, poste, permissions)
 VALUES
 ('Sadia', 'Emmanuel', 'emmanuel.sadia@gmail.com', 'adminpass', 'Responsable Pédagogique', 'Gestion complète des emplois du temps'),
 ('Don', 'Bellystar', 'belleystar.don@gmail.com', 'secure123', 'Directeur Département', 'Validation des plannings');
-SELECT * FROM matiere WHERE id_matiere= 'MAT201';
+SELECT * FROM matiere WHERE id_matiere = 'MAT201';
 
-
---  TABLE MATIERE
-
+-- =========================================================
+-- 📚 TABLE MATIERE
+-- =========================================================
 INSERT INTO matiere (id_matiere,nom_matiere)
 VALUES
 ('INF101', 'Programmation Web'),
 ('MAT201', 'Analyse Mathematique'),
 ('PHY301', 'Mécanique Generale');
 
-
---  TABLE SALLE
-
+-- =========================================================
+-- 🏫 TABLE SALLE
+-- =========================================================
 INSERT INTO salle (nom_salle, capacite, type_salle, localisation)
 VALUES
 ('Salle A1', 40, 'Informatique', 'Bâtiment A'),
 ('Salle B2', 30, 'Mathématiques', 'Bâtiment B'),
 ('Salle C3', 50, 'Physique', 'Bâtiment C');
 
-
---  TABLE EQUIPEMENT_SALLE
-
+-- =========================================================
+-- 🧰 TABLE EQUIPEMENT_SALLE
+-- =========================================================
 INSERT INTO equipement_salle (id_salle, nom_equipement, quantite)
 VALUES
 (1, 'Vidéoprojecteur', 1),
@@ -176,18 +179,18 @@ VALUES
 (2, 'Tableau blanc', 1),
 (3, 'Système audio', 1);
 
-
---  TABLE ENSEIGNANT_MATIERE (relation N,N)
-
+-- =========================================================
+-- 🧮 TABLE ENSEIGNANT_MATIERE
+-- =========================================================
 INSERT INTO enseignant_matiere (id_enseignant, id_matiere)
 VALUES
 (1, 'INF101'),  -- Sane enseigne Programmation Web
 (2, 'MAT201'),  -- Izere enseigne Analyse Mathématique
 (3, 'PHY301');  -- Ali enseigne Mécanique Générale
 
-
---  TABLE DISPONIBILITE
-
+-- =========================================================
+-- ⏰ TABLE DISPONIBILITE
+-- =========================================================
 INSERT INTO disponibilite (id_enseignant, jour, heure_debut, heure_fin, type_disponibilite, commentaire)
 VALUES
 (1, 'Lundi', '08:00', '12:00', 'Disponible', 'Matinée libre'),
@@ -195,36 +198,45 @@ VALUES
 (2, 'Mardi', '08:00', '12:00', 'Disponible', 'Cours du matin'),
 (3, 'Jeudi', '10:00', '16:00', 'Disponible', 'Préféré pour TP');
 
-
---  TABLE COURS
-
-INSERT INTO cours (intitule, heure_debut, heure_fin, id_matiere, id_enseignant)
+-- =========================================================
+-- 📘 TABLE COURS
+-- =========================================================
+INSERT INTO cours (intitule,type_cours ,heure_debut, heure_fin, id_matiere, id_enseignant)
 VALUES
-('Programmation Web - TP', '08:00', '10:00', 'INF101', 1),
-('Analyse Mathématique - TD', '10:00', '12:00', 'MAT201', 2),
-('Mécanique Générale - Cours', '14:00', '16:00', 'PHY301', 3);
+('Programmation Web ','TD', '08:00', '10:00', 'INF101', 1),
+('Analyse Mathématique ','TP', '10:00', '12:00', 'MAT201', 2),
+('Mécanique Générale ','CM', '14:00', '16:00', 'PHY301', 3);
 
-
---  TABLE EMPLOI_DU_TEMPS
-
+-- =========================================================
+-- 🗓️ TABLE EMPLOI_DU_TEMPS
+-- =========================================================
 INSERT INTO emploi_du_temps (num_cours, id_salle, jour, date, statut)
 VALUES
 (1, 1, 'Lundi', '2025-11-03', 'Planifié'),
 (2, 2, 'Mardi', '2025-11-04', 'Planifié'),
 (3, 3, 'Jeudi', '2025-11-06', 'Planifié');
 
-
---  TABLE NOTIFICATION
-
+-- =========================================================
+-- 🔔 TABLE NOTIFICATION
+-- =========================================================
 INSERT INTO notification (destinataire_type, id_enseignant, titre, message)
 VALUES
 ('Enseignant', 1, 'Nouveau cours ajouté', 'Votre séance de Programmation Web a été planifiée pour lundi.'),
 ('Enseignant', 2, 'Changement de salle', 'Votre cours d’Analyse Mathématique est déplacé en Salle B2.'),
 ('Administrateur', NULL, 'Mise à jour du système', 'Les données de l’emploi du temps ont été sauvegardées.');
 
-
-
-
+DROP TABLE
+notification,
+emploi_du_temps,
+disponibilite,
+enseignant_matiere,
+equipement_salle,
+cours,
+salle,
+matiere,
+enseignant,
+administrateur
+CASCADE;
 
 
 
@@ -248,6 +260,6 @@ SELECT * FROM cours;
 SELECT * FROM emploi_du_temps;
 SELECT * FROM notification;
 SELECT * FROM enseignant_matiere;
-UPDATE salle SET est_disponible = FALSE WHERE id_salle = 3;
 
 drop table emploi_du_temps;
+
