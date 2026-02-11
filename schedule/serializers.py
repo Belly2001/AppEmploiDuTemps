@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from . models import Enseignant, Salle,Notification,Administrateur
+from . models import Enseignant, Salle,Notification,Administrateur,Matiere
 
 class EnseignantSerializer(serializers.ModelSerializer):
     class Meta:
@@ -12,11 +12,13 @@ class EnseignantSerializer(serializers.ModelSerializer):
             'mot_de_passe',
             'departement',
             'grade',
-            'statut'
+            'statut',
         ]
         extra_kwargs = {
             'mot_de_passe' : {'write_only': True}, #masquer le mdp lors de la lecture
             'email' : {'required' : True},
+            'grade' : {'required' : False},
+            'status' : {'required' : False},
         }
 
 
@@ -42,4 +44,10 @@ class AdministrateurSerializer(serializers.ModelSerializer):
     class Meta:
         model = Administrateur
         field= '__all__'
+
+class MatiereSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Matiere
+        field= '__all__'
+
 

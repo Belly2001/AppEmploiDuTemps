@@ -106,7 +106,6 @@ class EnseignantGradeStatusUpdateView(generics.UpdateAPIView):
 
 
 
-
 @api_view(['PUT'])  
 #fonction devant permettre de changer le grade et le statut de l'enseignant
 def modifier_infos_enseignant(request,id):
@@ -160,5 +159,78 @@ def afficher_notifications_enseignant(request,id):
     
 
 
+#fonction permettant d'enregistrer un enseignant dans la base
 
+"""
+On enregistre un enseignant avec :
+-son nom 
+-son prenom 
+-sa date de naissance 
+-email 
+-mot de passe 
+-departement (avec une liste de département qu'il doit choisir)
+-grade par défaut : enseignant titulaire
+-statut par défaut : actif 
+
+a la fin de l'enregistrement , un id lui est attribué automatiquement
+"""
+
+@api_view(['POST'])
+def ajouter_enseignant(request):
+    #faire une copies des donnees entrées par l'enseignants
+    donneesEns = request.data.copy()
+
+#attribuer les valeurs par défaut pour le grade et le status
+    donneesEns['grade'] = 'enseignant titulaire'
+    donneesEns['statut'] = 'actif'
+
+#le serializer permet 
+    serializer = EnseignantSerializer(data=donneesEns)
+
+    #si les données nettoyés en serializer sont valides 
+    if serializer.is_valid():
+        #on sauvegarde les données 
+        serializer.save()
+        #on retourne  la réponse sous forme d'api 
+        return Response(
+            {
+                'message': 'Enseignant enregistré avec succès',
+                'enseignant': serializer.data
+
+            },
+            status = status.HTTP_201_CREATED
+        )
+    return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+#fonction permettant d'ajouter une matière à la base
+@api_view(['POST'])
+def ajouterMatiere(request):
+    data = request.data.copy()
+    serializer = MatiereSerializer(data=data)
+
+    #si les données nettoyés en serializer sont valides 
+    if serializer.is_valid():
+        #on sauvegarde les données 
+        serializer.save()
+        #on retourne  la réponse sous forme d'api 
+        return Response(
+            {
+                'message': 'Matière enregistrée avec succès',
+                'enseignant': serializer.data
+
+            },
+            status = status.HTTP_201_CREATED
+        )
+    return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+
+#fonction permettant d'enregistrer une scéance de cours entrée par un professeur 
+
+@api_view(['POST'])
+def enregistrer_sceance_cours(request):
+    pass
 
