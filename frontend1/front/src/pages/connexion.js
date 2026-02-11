@@ -70,7 +70,7 @@ export default function Connexion() {
   </div>
 
   <p className={styles.quote}>
-    "La meilleure façon de gérer son temps, c'est de le planifier intelligemment"
+    La meilleure façon de gérer son temps, cest de le planifier intelligemment
   </p>
 </div>
 
