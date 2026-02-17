@@ -4,7 +4,10 @@ from .models import Enseignant, Salle, Administrateur, Cours, EmploiDuTemps, Not
 class EnseignantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Enseignant
-        fields = ["id_enseignant", "nom", "prenom", "email", "departement", "grade", "statut"]
+        fields = ["id_enseignant", "nom", "prenom", "email", "departement", "grade", "statut", "mot_de_passe"]
+        extra_kwargs = {
+            'mot_de_passe': {'write_only': True, 'required': False, 'default': 'temp1234'}
+        }
 
 class SalleSerializer(serializers.ModelSerializer):
     class Meta:

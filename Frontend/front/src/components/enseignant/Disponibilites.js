@@ -1,19 +1,20 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styles from '@/styles/Enseignant.module.css'
 
 export default function Disponibilites({ enseignant }) {
   
-  // Liste des disponibilités (simulation, viendra de l'API plus tard)
-  const [disponibilites, setDisponibilites] = useState([
-    { id: 1, jour: 'Lundi', heureDebut: '08:00', heureFin: '12:00', commentaire: 'Matinée libre' },
-    { id: 2, jour: 'Mercredi', heureDebut: '14:00', heureFin: '18:00', commentaire: 'Après-midi disponible' }
-  ])
+  // Liste des disponibilités
+  // NOTE : Le backend n'a pas encore de route pour les disponibilités
+  // Les données sont gérées localement pour l'instant
+  const [disponibilites, setDisponibilites] = useState([])
+  const [chargement, setChargement] = useState(false)
 
   // État du formulaire pour ajouter une nouvelle dispo
+  // Noms des champs = noms dans le modèle Django (disponibilite)
   const [nouvelleDispo, setNouvelleDispo] = useState({
     jour: '',
-    heureDebut: '',
-    heureFin: '',
+    heure_debut: '',
+    heure_fin: '',
     commentaire: ''
   })
 
@@ -22,6 +23,16 @@ export default function Disponibilites({ enseignant }) {
 
   // Liste des jours de la semaine
   const jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
+
+  // TODO: Charger les disponibilités depuis l'API quand la route sera prête
+  // useEffect(() => {
+  //   if (enseignant && enseignant.id_enseignant) {
+  //     fetch(`http://localhost:8000/schedule/enseignant/${enseignant.id_enseignant}/disponibilites/`)
+  //       .then(res => res.json())
+  //       .then(data => setDisponibilites(data))
+  //       .catch(err => console.error(err))
+  //   }
+  // }, [enseignant])
 
   // Gestion des changements dans le formulaire
   const handleChange = (e) => {
@@ -33,52 +44,53 @@ export default function Disponibilites({ enseignant }) {
   }
 
   // Ajouter une nouvelle disponibilité
-  const ajouterDisponibilite = (e) => {
+  const ajouterDisponibilite = async (e) => {
     e.preventDefault()
 
-    // Vérifications
-    if (!nouvelleDispo.jour || !nouvelleDispo.heureDebut || !nouvelleDispo.heureFin) {
+    if (!nouvelleDispo.jour || !nouvelleDispo.heure_debut || !nouvelleDispo.heure_fin) {
       setMessage({ type: 'erreur', texte: 'Veuillez remplir le jour et les horaires' })
       return
     }
 
-    // Vérifier que l'heure de fin est après l'heure de début
-    if (nouvelleDispo.heureDebut >= nouvelleDispo.heureFin) {
+    if (nouvelleDispo.heure_debut >= nouvelleDispo.heure_fin) {
       setMessage({ type: 'erreur', texte: "L'heure de fin doit être après l'heure de début" })
       return
     }
 
-    // Créer la nouvelle dispo avec un ID temporaire
     const newDispo = {
-      id: Date.now(), // ID temporaire, sera remplacé par l'ID de la BDD
+      id_disponibilite: Date.now(), // ID temporaire
       ...nouvelleDispo
     }
 
-    // Ajouter à la liste
+    // TODO: Envoyer à l'API quand la route sera prête
+    // try {
+    //   const res = await fetch(`http://localhost:8000/schedule/enseignant/${enseignant.id_enseignant}/disponibilites/`, {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({
+    //       id_enseignant: enseignant.id_enseignant,
+    //       jour: nouvelleDispo.jour,
+    //       heure_debut: nouvelleDispo.heure_debut,
+    //       heure_fin: nouvelleDispo.heure_fin,
+    //       commentaire: nouvelleDispo.commentaire,
+    //       type_disponibilite: 'Disponible'
+    //     })
+    //   })
+    //   if (res.ok) { ... }
+    // } catch (err) { ... }
+
     setDisponibilites(prev => [...prev, newDispo])
-
-    // Réinitialiser le formulaire
-    setNouvelleDispo({ jour: '', heureDebut: '', heureFin: '', commentaire: '' })
-
-    // Message de succès
-    setMessage({ type: 'succes', texte: 'Disponibilité ajoutée avec succès !' })
-
-    // Effacer le message après 3 secondes
+    setNouvelleDispo({ jour: '', heure_debut: '', heure_fin: '', commentaire: '' })
+    setMessage({ type: 'succes', texte: 'Disponibilité ajoutée (locale, pas encore sauvegardée en BDD)' })
     setTimeout(() => setMessage({ type: '', texte: '' }), 3000)
-
-    // TODO: Appel API pour sauvegarder en BDD
-    console.log('Nouvelle dispo à envoyer à l\'API:', newDispo)
   }
 
   // Supprimer une disponibilité
   const supprimerDisponibilite = (id) => {
     if (confirm('Voulez-vous vraiment supprimer cette disponibilité ?')) {
-      setDisponibilites(prev => prev.filter(d => d.id !== id))
+      setDisponibilites(prev => prev.filter(d => d.id_disponibilite !== id))
       setMessage({ type: 'succes', texte: 'Disponibilité supprimée' })
       setTimeout(() => setMessage({ type: '', texte: '' }), 3000)
-
-      // TODO: Appel API pour supprimer en BDD
-      console.log('Dispo à supprimer (id):', id)
     }
   }
 
@@ -98,7 +110,6 @@ export default function Disponibilites({ enseignant }) {
         </div>
 
         <form onSubmit={ajouterDisponibilite}>
-          {/* Ligne 1 : Jour + Heures */}
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label className={styles.label}>Jour</label>
@@ -119,8 +130,8 @@ export default function Disponibilites({ enseignant }) {
               <label className={styles.label}>Heure de début</label>
               <input
                 type="time"
-                name="heureDebut"
-                value={nouvelleDispo.heureDebut}
+                name="heure_debut"
+                value={nouvelleDispo.heure_debut}
                 onChange={handleChange}
                 className={styles.input}
               />
@@ -130,15 +141,14 @@ export default function Disponibilites({ enseignant }) {
               <label className={styles.label}>Heure de fin</label>
               <input
                 type="time"
-                name="heureFin"
-                value={nouvelleDispo.heureFin}
+                name="heure_fin"
+                value={nouvelleDispo.heure_fin}
                 onChange={handleChange}
                 className={styles.input}
               />
             </div>
           </div>
 
-          {/* Ligne 2 : Commentaire */}
           <div className={styles.formGroup}>
             <label className={styles.label}>Commentaire (optionnel)</label>
             <input
@@ -151,7 +161,6 @@ export default function Disponibilites({ enseignant }) {
             />
           </div>
 
-          {/* Bouton */}
           <button type="submit" className={`${styles.button} ${styles.buttonPrimary}`}>
             Ajouter cette disponibilité
           </button>
@@ -176,11 +185,11 @@ export default function Disponibilites({ enseignant }) {
         ) : (
           <div className={styles.dispoList}>
             {disponibilites.map((dispo) => (
-              <div key={dispo.id} className={styles.dispoItem}>
+              <div key={dispo.id_disponibilite} className={styles.dispoItem}>
                 <div className={styles.dispoInfo}>
                   <span className={styles.dispoJour}>{dispo.jour}</span>
                   <span className={styles.dispoHeure}>
-                    {dispo.heureDebut} - {dispo.heureFin}
+                    {dispo.heure_debut} - {dispo.heure_fin}
                   </span>
                   {dispo.commentaire && (
                     <span style={{ color: '#888', fontStyle: 'italic' }}>
@@ -190,7 +199,7 @@ export default function Disponibilites({ enseignant }) {
                 </div>
                 <div className={styles.dispoActions}>
                   <button
-                    onClick={() => supprimerDisponibilite(dispo.id)}
+                    onClick={() => supprimerDisponibilite(dispo.id_disponibilite)}
                     className={styles.deleteButton}
                   >
                     Supprimer

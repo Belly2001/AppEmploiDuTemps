@@ -1,14 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styles from '@/styles/Admin.module.css'
+import { getEDT, getCours, getEnseignants, getSalles, apiAjouterCours, apiSupprimerCours } from '@/services/api'
 
 export default function GestionEDT() {
   
-  // Liste des cours assignés (simulation)
-  const [cours, setCours] = useState([
-    { id: 1, intitule: 'Programmation Web', type: 'TP', jour: 'Lundi', heureDebut: '08:00', heureFin: '10:00', enseignant: 'Moussa Sane', salle: 'Salle A1', matiere: 'INF101' },
-    { id: 2, intitule: 'Analyse Mathématique', type: 'TD', jour: 'Mardi', heureDebut: '10:00', heureFin: '12:00', enseignant: 'Divan Izere', salle: 'Salle B2', matiere: 'MAT201' },
-    { id: 3, intitule: 'Mécanique Générale', type: 'CM', jour: 'Jeudi', heureDebut: '14:00', heureFin: '16:00', enseignant: 'Hassane Ali', salle: 'Salle C3', matiere: 'PHY301' }
-  ])
+  // Données de l'emploi du temps — chargées depuis l'API
+  const [edt, setEdt] = useState([])
+  const [coursListe, setCoursListe] = useState([])
+  const [chargement, setChargement] = useState(true)
 
   // Modal pour ajouter un cours
   const [modalOuvert, setModalOuvert] = useState(false)
@@ -16,78 +15,101 @@ export default function GestionEDT() {
   // Formulaire nouveau cours
   const [nouveauCours, setNouveauCours] = useState({
     intitule: '',
-    type: '',
-    jour: '',
-    heureDebut: '',
-    heureFin: '',
-    enseignant: '',
-    salle: '',
-    matiere: ''
+    type_cours: '',
+    heure_debut: '',
+    heure_fin: '',
+    id_enseignant: '',
+    id_matiere: ''
   })
 
   // Message
   const [message, setMessage] = useState({ type: '', texte: '' })
 
-  // Données pour les selects (viendront de l'API)
-  const enseignants = ['Moussa Sane', 'Divan Izere', 'Hassane Ali']
-  const salles = ['Salle A1', 'Salle B2', 'Salle C3']
-  const matieres = [
-    { id: 'INF101', nom: 'Programmation Web' },
-    { id: 'MAT201', nom: 'Analyse Mathématique' },
-    { id: 'PHY301', nom: 'Mécanique Générale' }
-  ]
+  // Données pour les selects — chargées depuis l'API
+  const [enseignants, setEnseignants] = useState([])
+  const [salles, setSalles] = useState([])
+
   const jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
   const typesCours = ['CM', 'TD', 'TP']
+
+  // Charger les données au démarrage
+  useEffect(() => {
+    chargerDonnees()
+  }, [])
+
+  const chargerDonnees = async () => {
+    try {
+      setChargement(true)
+      const [edtData, coursData, enseignantsData, sallesData] = await Promise.all([
+        getEDT(),
+        getCours(),
+        getEnseignants(),
+        getSalles()
+      ])
+      setEdt(edtData)
+      setCoursListe(coursData)
+      setEnseignants(enseignantsData)
+      setSalles(sallesData)
+    } catch (err) {
+      console.error('Erreur chargement données:', err)
+      setMessage({ type: 'erreur', texte: 'Impossible de charger les données' })
+    } finally {
+      setChargement(false)
+    }
+  }
 
   // Gestion du formulaire
   const handleChange = (e) => {
     const { name, value } = e.target
     setNouveauCours(prev => ({ ...prev, [name]: value }))
-
-    // Auto-remplir l'intitulé si on sélectionne une matière
-    if (name === 'matiere') {
-      const mat = matieres.find(m => m.id === value)
-      if (mat) {
-        setNouveauCours(prev => ({ ...prev, intitule: mat.nom }))
-      }
-    }
   }
 
   // Ajouter un cours
-  const ajouterCours = (e) => {
+  const ajouterCours = async (e) => {
     e.preventDefault()
 
-    if (!nouveauCours.intitule || !nouveauCours.jour || !nouveauCours.heureDebut || !nouveauCours.heureFin || !nouveauCours.enseignant || !nouveauCours.salle) {
+    if (!nouveauCours.intitule || !nouveauCours.heure_debut || !nouveauCours.heure_fin || !nouveauCours.type_cours) {
       setMessage({ type: 'erreur', texte: 'Veuillez remplir tous les champs obligatoires' })
       return
     }
 
-    if (nouveauCours.heureDebut >= nouveauCours.heureFin) {
+    if (nouveauCours.heure_debut >= nouveauCours.heure_fin) {
       setMessage({ type: 'erreur', texte: "L'heure de fin doit être après l'heure de début" })
       return
     }
 
-    const newCours = {
-      id: Date.now(),
-      ...nouveauCours
+    try {
+      await apiAjouterCours({
+        intitule: nouveauCours.intitule,
+        type_cours: nouveauCours.type_cours,
+        heure_debut: nouveauCours.heure_debut,
+        heure_fin: nouveauCours.heure_fin,
+        id_enseignant: nouveauCours.id_enseignant || null,
+        id_matiere: nouveauCours.id_matiere || null
+      })
+      await chargerDonnees()
+      setNouveauCours({ intitule: '', type_cours: '', heure_debut: '', heure_fin: '', id_enseignant: '', id_matiere: '' })
+      setModalOuvert(false)
+      setMessage({ type: 'succes', texte: 'Cours ajouté avec succès !' })
+      setTimeout(() => setMessage({ type: '', texte: '' }), 3000)
+    } catch (err) {
+      console.error('Erreur ajout cours:', err)
+      setMessage({ type: 'erreur', texte: "Erreur lors de l'ajout du cours" })
     }
-
-    setCours(prev => [...prev, newCours])
-    setNouveauCours({ intitule: '', type: '', jour: '', heureDebut: '', heureFin: '', enseignant: '', salle: '', matiere: '' })
-    setModalOuvert(false)
-    setMessage({ type: 'succes', texte: 'Cours ajouté avec succès !' })
-    setTimeout(() => setMessage({ type: '', texte: '' }), 3000)
-
-    // TODO: Appel API
-    console.log('Nouveau cours:', newCours)
   }
 
   // Supprimer un cours
-  const supprimerCours = (id) => {
+  const supprimerCours = async (num_cours) => {
     if (confirm('Voulez-vous vraiment supprimer ce cours ?')) {
-      setCours(prev => prev.filter(c => c.id !== id))
-      setMessage({ type: 'succes', texte: 'Cours supprimé' })
-      setTimeout(() => setMessage({ type: '', texte: '' }), 3000)
+      try {
+        await apiSupprimerCours(num_cours)
+        await chargerDonnees()
+        setMessage({ type: 'succes', texte: 'Cours supprimé' })
+        setTimeout(() => setMessage({ type: '', texte: '' }), 3000)
+      } catch (err) {
+        console.error('Erreur suppression cours:', err)
+        setMessage({ type: 'erreur', texte: 'Erreur lors de la suppression' })
+      }
     }
   }
 
@@ -101,11 +123,10 @@ export default function GestionEDT() {
     }
   }
 
-  // Grouper les cours par jour
-  const coursParJour = jours.reduce((acc, jour) => {
-    acc[jour] = cours.filter(c => c.jour === jour)
-    return acc
-  }, {})
+  // Affichage pendant le chargement
+  if (chargement) {
+    return <div style={{ textAlign: 'center', padding: '50px', color: '#666' }}>Chargement de l'emploi du temps...</div>
+  }
 
   return (
     <div>
@@ -121,37 +142,72 @@ export default function GestionEDT() {
         <div className={styles.statCard}>
           <div className={`${styles.statIcon} ${styles.statIconBlue}`}>📅</div>
           <div className={styles.statInfo}>
-            <h3>{cours.length}</h3>
-            <p>Cours planifiés</p>
+            <h3>{coursListe.length}</h3>
+            <p>Cours créés</p>
           </div>
         </div>
         <div className={styles.statCard}>
           <div className={`${styles.statIcon} ${styles.statIconGreen}`}>📗</div>
           <div className={styles.statInfo}>
-            <h3>{cours.filter(c => c.type === 'CM').length}</h3>
+            <h3>{coursListe.filter(c => c.type_cours === 'CM').length}</h3>
             <p>Cours magistraux</p>
           </div>
         </div>
         <div className={styles.statCard}>
           <div className={`${styles.statIcon} ${styles.statIconOrange}`}>📙</div>
           <div className={styles.statInfo}>
-            <h3>{cours.filter(c => c.type === 'TD').length}</h3>
+            <h3>{coursListe.filter(c => c.type_cours === 'TD').length}</h3>
             <p>TD</p>
           </div>
         </div>
         <div className={styles.statCard}>
           <div className={`${styles.statIcon} ${styles.statIconPurple}`}>📘</div>
           <div className={styles.statInfo}>
-            <h3>{cours.filter(c => c.type === 'TP').length}</h3>
+            <h3>{coursListe.filter(c => c.type_cours === 'TP').length}</h3>
             <p>TP</p>
           </div>
         </div>
       </div>
 
-      {/* Actions */}
+      {/* Section EDT (depuis la table emploi_du_temps) */}
+      {edt.length > 0 && (
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <h3 className={styles.cardTitle}>Emploi du temps planifié</h3>
+          </div>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Jour</th>
+                <th>Date</th>
+                <th>Cours</th>
+                <th>Salle</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              {edt.map((e) => (
+                <tr key={e.id_edt}>
+                  <td><strong>{e.jour}</strong></td>
+                  <td>{e.date}</td>
+                  <td>{e.cours_intitule || `Cours #${e.num_cours}`}</td>
+                  <td>{e.salle_nom || `Salle #${e.id_salle}`}</td>
+                  <td>
+                    <span className={`${styles.badge} ${e.statut === 'Actif' ? styles.badgeActif : styles.badgeInactif}`}>
+                      {e.statut || 'Non défini'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Section Cours */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
-          <h3 className={styles.cardTitle}>Emplois du temps</h3>
+          <h3 className={styles.cardTitle}>Liste des cours</h3>
           <button 
             onClick={() => setModalOuvert(true)}
             className={`${styles.button} ${styles.buttonSuccess}`}
@@ -160,42 +216,39 @@ export default function GestionEDT() {
           </button>
         </div>
 
-        {/* Vue par jour */}
-        {cours.length === 0 ? (
+        {coursListe.length === 0 ? (
           <div className={styles.emptyState}>
             <div className={styles.emptyIcon}>📅</div>
-            <h4 className={styles.emptyTitle}>Aucun cours planifié</h4>
-            <p className={styles.emptyText}>Commencez par ajouter des cours à l'emploi du temps.</p>
+            <h4 className={styles.emptyTitle}>Aucun cours créé</h4>
+            <p className={styles.emptyText}>Commencez par ajouter des cours.</p>
           </div>
         ) : (
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Jour</th>
-                <th>Horaires</th>
-                <th>Cours</th>
+                <th>Intitulé</th>
                 <th>Type</th>
+                <th>Horaires</th>
                 <th>Enseignant</th>
-                <th>Salle</th>
+                <th>Matière</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {cours.map((c) => (
-                <tr key={c.id}>
-                  <td><strong>{c.jour}</strong></td>
-                  <td>{c.heureDebut} - {c.heureFin}</td>
+              {coursListe.map((c) => (
+                <tr key={c.num_cours}>
                   <td>{c.intitule}</td>
                   <td>
-                    <span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '600', ...getTypeStyle(c.type) }}>
-                      {c.type}
+                    <span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '600', ...getTypeStyle(c.type_cours) }}>
+                      {c.type_cours}
                     </span>
                   </td>
-                  <td>{c.enseignant}</td>
-                  <td>{c.salle}</td>
+                  <td>{c.heure_debut} - {c.heure_fin}</td>
+                  <td>{c.enseignant_prenom} {c.enseignant_nom}</td>
+                  <td>{c.nom_matiere || '-'}</td>
                   <td>
                     <button 
-                      onClick={() => supprimerCours(c.id)}
+                      onClick={() => supprimerCours(c.num_cours)}
                       className={`${styles.button} ${styles.buttonSmall} ${styles.buttonDanger}`}
                     >
                       Supprimer
@@ -218,33 +271,6 @@ export default function GestionEDT() {
             </div>
 
             <form onSubmit={ajouterCours}>
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>Matière</label>
-                  <select
-                    name="matiere"
-                    value={nouveauCours.matiere}
-                    onChange={handleChange}
-                    className={styles.select}
-                  >
-                    <option value="">-- Choisir --</option>
-                    {matieres.map(m => <option key={m.id} value={m.id}>{m.nom}</option>)}
-                  </select>
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>Type de cours *</label>
-                  <select
-                    name="type"
-                    value={nouveauCours.type}
-                    onChange={handleChange}
-                    className={styles.select}
-                  >
-                    <option value="">-- Choisir --</option>
-                    {typesCours.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-              </div>
-
               <div className={styles.formGroup}>
                 <label className={styles.label}>Intitulé du cours *</label>
                 <input
@@ -253,29 +279,48 @@ export default function GestionEDT() {
                   value={nouveauCours.intitule}
                   onChange={handleChange}
                   className={styles.input}
-                  placeholder="Ex: Programmation Web - TP"
+                  placeholder="Ex: Programmation Web"
                 />
               </div>
 
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>Jour *</label>
+                  <label className={styles.label}>Type de cours *</label>
                   <select
-                    name="jour"
-                    value={nouveauCours.jour}
+                    name="type_cours"
+                    value={nouveauCours.type_cours}
                     onChange={handleChange}
                     className={styles.select}
                   >
                     <option value="">-- Choisir --</option>
-                    {jours.map(j => <option key={j} value={j}>{j}</option>)}
+                    {typesCours.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Enseignant</label>
+                  <select
+                    name="id_enseignant"
+                    value={nouveauCours.id_enseignant}
+                    onChange={handleChange}
+                    className={styles.select}
+                  >
+                    <option value="">-- Choisir --</option>
+                    {enseignants.map(e => (
+                      <option key={e.id_enseignant} value={e.id_enseignant}>
+                        {e.prenom} {e.nom}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>Heure début *</label>
                   <input
                     type="time"
-                    name="heureDebut"
-                    value={nouveauCours.heureDebut}
+                    name="heure_debut"
+                    value={nouveauCours.heure_debut}
                     onChange={handleChange}
                     className={styles.input}
                   />
@@ -284,38 +329,11 @@ export default function GestionEDT() {
                   <label className={styles.label}>Heure fin *</label>
                   <input
                     type="time"
-                    name="heureFin"
-                    value={nouveauCours.heureFin}
+                    name="heure_fin"
+                    value={nouveauCours.heure_fin}
                     onChange={handleChange}
                     className={styles.input}
                   />
-                </div>
-              </div>
-
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>Enseignant *</label>
-                  <select
-                    name="enseignant"
-                    value={nouveauCours.enseignant}
-                    onChange={handleChange}
-                    className={styles.select}
-                  >
-                    <option value="">-- Choisir --</option>
-                    {enseignants.map(e => <option key={e} value={e}>{e}</option>)}
-                  </select>
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>Salle *</label>
-                  <select
-                    name="salle"
-                    value={nouveauCours.salle}
-                    onChange={handleChange}
-                    className={styles.select}
-                  >
-                    <option value="">-- Choisir --</option>
-                    {salles.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
                 </div>
               </div>
 

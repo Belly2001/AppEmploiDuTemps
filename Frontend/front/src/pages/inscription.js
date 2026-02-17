@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import styles from '@/styles/Connexion.module.css'
+import { apiAjouterEnseignant } from '@/services/api'
 
 export default function Inscription() {
   const router = useRouter()
 
-  // États pour chaque champ du formulaire
   const [formData, setFormData] = useState({
     nom: '',
     prenom: '',
@@ -17,10 +17,9 @@ export default function Inscription() {
     grade: ''
   })
 
-  // État pour les erreurs de validation
   const [erreur, setErreur] = useState('')
+  const [chargement, setChargement] = useState(false)
 
-  // Listes pour les selects (tu pourras les modifier selon tes besoins)
   const departements = [
     'Informatique',
     'Mathématiques',
@@ -39,22 +38,19 @@ export default function Inscription() {
     'Vacataire'
   ]
 
-  // Gestion des changements dans les inputs
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
       [name]: value
     }))
-    // Efface l'erreur quand l'utilisateur modifie un champ
     setErreur('')
   }
 
-  // Soumission du formulaire
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setErreur('')
 
-    // Vérification : tous les champs sont remplis ?
     if (!formData.nom || !formData.prenom || !formData.email || 
         !formData.motDePasse || !formData.confirmMotDePasse || 
         !formData.departement || !formData.grade) {
@@ -62,40 +58,51 @@ export default function Inscription() {
       return
     }
 
-    // Vérification : les mots de passe correspondent ?
     if (formData.motDePasse !== formData.confirmMotDePasse) {
       setErreur('Les mots de passe ne correspondent pas')
       return
     }
 
-    // Vérification : mot de passe assez long ?
     if (formData.motDePasse.length < 6) {
       setErreur('Le mot de passe doit contenir au moins 6 caractères')
       return
     }
 
-    // Tout est OK — affichage console pour debug
-    console.log('Inscription:', formData)
+    setChargement(true)
 
-    // TODO: Appel API pour créer le compte
-    // Pour l'instant, on simule une inscription réussie
-    alert('Compte créé avec succès ! (simulation)')
-    router.push('/connexion')
+    try {
+      // On utilise la route d'ajout d'enseignant du backend
+      // Les noms des champs correspondent au serializer Django
+      await apiAjouterEnseignant({
+        nom: formData.nom,
+        prenom: formData.prenom,
+        email: formData.email,
+        grade: formData.grade,
+        departement: formData.departement,
+        statut: 'Actif'
+      })
+
+      alert('Compte créé avec succès !')
+      router.push('/connexion')
+
+    } catch (err) {
+      console.error('Erreur inscription:', err)
+      setErreur("Erreur lors de l'inscription. Vérifiez que l'email n'est pas déjà utilisé.")
+    } finally {
+      setChargement(false)
+    }
   }
 
   return (
     <div className={styles.connexionPage}>
-      {/* Navigation retour */}
       <nav className={styles.nav}>
         <Link href="/">
           <button className={styles.backButton}>← Retour</button>
         </Link>
       </nav>
 
-      {/* Container principal avec 2 colonnes */}
       <div className={styles.mainContainer}>
         
-        {/* SECTION GAUCHE - Slogans (identique à connexion) */}
         <div className={styles.leftSection}>
           <div className={styles.brandSection}>
             <h1 className={styles.brandTitle}>Schedule APP</h1>
@@ -142,13 +149,11 @@ export default function Inscription() {
           </p>
         </div>
 
-        {/* SECTION DROITE - Formulaire d'inscription */}
         <div className={styles.rightSection}>
           <div className={styles.formBox}>
             <h1 className={styles.title}>Créer un compte</h1>
             <p className={styles.subtitle}>Remplissez vos informations</p>
 
-            {/* Affichage des erreurs */}
             {erreur && (
               <div style={{
                 backgroundColor: '#ffe6e6',
@@ -165,7 +170,6 @@ export default function Inscription() {
 
             <form onSubmit={handleSubmit} className={styles.form}>
               
-              {/* Ligne 1 : Nom et Prénom côte à côte */}
               <div style={{ display: 'flex', gap: '15px' }}>
                 <div className={styles.inputGroup} style={{ flex: 1 }}>
                   <label className={styles.label}>Nom</label>
@@ -192,7 +196,6 @@ export default function Inscription() {
                 </div>
               </div>
 
-              {/* Email */}
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Email</label>
                 <input
@@ -205,7 +208,6 @@ export default function Inscription() {
                 />
               </div>
 
-              {/* Mot de passe */}
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Mot de passe</label>
                 <input
@@ -218,7 +220,6 @@ export default function Inscription() {
                 />
               </div>
 
-              {/* Confirmer mot de passe */}
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Confirmer le mot de passe</label>
                 <input
@@ -231,7 +232,6 @@ export default function Inscription() {
                 />
               </div>
 
-              {/* Ligne 2 : Département et Grade côte à côte */}
               <div style={{ display: 'flex', gap: '15px' }}>
                 <div className={styles.inputGroup} style={{ flex: 1 }}>
                   <label className={styles.label}>Département</label>
@@ -266,12 +266,10 @@ export default function Inscription() {
                 </div>
               </div>
 
-              {/* Bouton S'inscrire */}
-              <button type="submit" className={styles.submitButton}>
-                S'inscrire
+              <button type="submit" className={styles.submitButton} disabled={chargement}>
+                {chargement ? 'Inscription en cours...' : "S'inscrire"}
               </button>
 
-              {/* Lien vers connexion */}
               <p className={styles.signupText}>
                 Déjà un compte ?{' '}
                 <Link href="/connexion" className={styles.signupLink}>

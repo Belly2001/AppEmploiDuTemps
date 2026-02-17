@@ -1,14 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styles from '@/styles/Admin.module.css'
+import { getEnseignants, apiAjouterEnseignant, apiSupprimerEnseignant, apiModifierEnseignant } from '@/services/api'
 
 export default function GestionEnseignants() {
   
-  // Liste des enseignants (simulation, viendra de l'API)
-  const [enseignants, setEnseignants] = useState([
-    { id: 1, nom: 'Sane', prenom: 'Moussa', email: 'moussa.sane@univ.com', grade: 'Maître de conférences', departement: 'Informatique', statut: 'Actif' },
-    { id: 2, nom: 'Izere', prenom: 'Divan', email: 'divan.izere@univ.com', grade: 'Professeur', departement: 'Mathématiques', statut: 'Actif' },
-    { id: 3, nom: 'Ali', prenom: 'Hassane', email: 'hassane.ali@univ.com', grade: 'Assistant', departement: 'Physique', statut: 'Actif' }
-  ])
+  // Liste des enseignants — chargée depuis l'API
+  const [enseignants, setEnseignants] = useState([])
+  const [chargement, setChargement] = useState(true)
 
   // État pour le filtre de recherche
   const [recherche, setRecherche] = useState('')
@@ -16,7 +14,7 @@ export default function GestionEnseignants() {
   // État pour le modal d'ajout
   const [modalOuvert, setModalOuvert] = useState(false)
 
-  // État pour le modal de détails (voir les dispos)
+  // État pour le modal de détails
   const [enseignantSelectionne, setEnseignantSelectionne] = useState(null)
 
   // État pour le formulaire d'ajout
@@ -35,12 +33,30 @@ export default function GestionEnseignants() {
   const grades = ['Assistant', 'Maître de conférences', 'Professeur', 'Vacataire']
   const departements = ['Informatique', 'Mathématiques', 'Physique', 'Chimie', 'Biologie', 'Lettres']
 
+  // Charger les enseignants au démarrage
+  useEffect(() => {
+    chargerEnseignants()
+  }, [])
+
+  const chargerEnseignants = async () => {
+    try {
+      setChargement(true)
+      const data = await getEnseignants()
+      setEnseignants(data)
+    } catch (err) {
+      console.error('Erreur chargement enseignants:', err)
+      setMessage({ type: 'erreur', texte: 'Impossible de charger les enseignants' })
+    } finally {
+      setChargement(false)
+    }
+  }
+
   // Filtrer les enseignants selon la recherche
   const enseignantsFiltres = enseignants.filter(e =>
-    e.nom.toLowerCase().includes(recherche.toLowerCase()) ||
-    e.prenom.toLowerCase().includes(recherche.toLowerCase()) ||
-    e.email.toLowerCase().includes(recherche.toLowerCase()) ||
-    e.departement.toLowerCase().includes(recherche.toLowerCase())
+    (e.nom || '').toLowerCase().includes(recherche.toLowerCase()) ||
+    (e.prenom || '').toLowerCase().includes(recherche.toLowerCase()) ||
+    (e.email || '').toLowerCase().includes(recherche.toLowerCase()) ||
+    (e.departement || '').toLowerCase().includes(recherche.toLowerCase())
   )
 
   // Gestion du formulaire
@@ -50,7 +66,7 @@ export default function GestionEnseignants() {
   }
 
   // Ajouter un enseignant
-  const ajouterEnseignant = (e) => {
+  const ajouterEnseignant = async (e) => {
     e.preventDefault()
 
     if (!nouveauEnseignant.nom || !nouveauEnseignant.prenom || !nouveauEnseignant.email) {
@@ -58,45 +74,60 @@ export default function GestionEnseignants() {
       return
     }
 
-    const newEnseignant = {
-      id: Date.now(),
-      ...nouveauEnseignant,
-      statut: 'Actif'
-    }
-
-    setEnseignants(prev => [...prev, newEnseignant])
-    setNouveauEnseignant({ nom: '', prenom: '', email: '', grade: '', departement: '' })
-    setModalOuvert(false)
-    setMessage({ type: 'succes', texte: 'Enseignant ajouté avec succès !' })
-    setTimeout(() => setMessage({ type: '', texte: '' }), 3000)
-
-    // TODO: Appel API
-    console.log('Nouvel enseignant:', newEnseignant)
-  }
-
-  // Supprimer un enseignant
-  const supprimerEnseignant = (id) => {
-    if (confirm('Voulez-vous vraiment supprimer cet enseignant ?')) {
-      setEnseignants(prev => prev.filter(e => e.id !== id))
-      setMessage({ type: 'succes', texte: 'Enseignant supprimé' })
+    try {
+      await apiAjouterEnseignant({
+        nom: nouveauEnseignant.nom,
+        prenom: nouveauEnseignant.prenom,
+        email: nouveauEnseignant.email,
+        grade: nouveauEnseignant.grade,
+        departement: nouveauEnseignant.departement,
+        statut: 'Actif'
+      })
+      await chargerEnseignants()
+      setNouveauEnseignant({ nom: '', prenom: '', email: '', grade: '', departement: '' })
+      setModalOuvert(false)
+      setMessage({ type: 'succes', texte: 'Enseignant ajouté avec succès !' })
       setTimeout(() => setMessage({ type: '', texte: '' }), 3000)
-
-      // TODO: Appel API
+    } catch (err) {
+      console.error('Erreur ajout:', err)
+      setMessage({ type: 'erreur', texte: "Erreur lors de l'ajout de l'enseignant" })
     }
   }
 
-  // Changer le statut
-  const changerStatut = (id) => {
-    setEnseignants(prev => prev.map(e => {
-      if (e.id === id) {
-        return { ...e, statut: e.statut === 'Actif' ? 'Inactif' : 'Actif' }
+  // Supprimer un enseignant — utilise id_enseignant (nom du champ backend)
+  const supprimerEnseignant = async (id_enseignant) => {
+    if (confirm('Voulez-vous vraiment supprimer cet enseignant ?')) {
+      try {
+        await apiSupprimerEnseignant(id_enseignant)
+        await chargerEnseignants()
+        setMessage({ type: 'succes', texte: 'Enseignant supprimé' })
+        setTimeout(() => setMessage({ type: '', texte: '' }), 3000)
+      } catch (err) {
+        console.error('Erreur suppression:', err)
+        setMessage({ type: 'erreur', texte: 'Erreur lors de la suppression' })
       }
-      return e
-    }))
+    }
+  }
+
+  // Changer le statut — utilise PATCH
+  const changerStatut = async (id_enseignant, statutActuel) => {
+    const nouveauStatut = statutActuel === 'Actif' ? 'Inactif' : 'Actif'
+    try {
+      await apiModifierEnseignant(id_enseignant, { statut: nouveauStatut })
+      await chargerEnseignants()
+    } catch (err) {
+      console.error('Erreur modification statut:', err)
+      setMessage({ type: 'erreur', texte: 'Erreur lors du changement de statut' })
+    }
   }
 
   // Initiales pour l'avatar
-  const getInitiales = (prenom, nom) => `${prenom.charAt(0)}${nom.charAt(0)}`
+  const getInitiales = (prenom, nom) => `${(prenom || '').charAt(0)}${(nom || '').charAt(0)}`
+
+  // Affichage pendant le chargement
+  if (chargement) {
+    return <div style={{ textAlign: 'center', padding: '50px', color: '#666' }}>Chargement des enseignants...</div>
+  }
 
   return (
     <div>
@@ -185,7 +216,7 @@ export default function GestionEnseignants() {
             </thead>
             <tbody>
               {enseignantsFiltres.map((ens) => (
-                <tr key={ens.id}>
+                <tr key={ens.id_enseignant}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <div className={styles.enseignantAvatar}>
@@ -199,7 +230,7 @@ export default function GestionEnseignants() {
                   <td>{ens.departement}</td>
                   <td>
                     <span className={`${styles.badge} ${ens.statut === 'Actif' ? styles.badgeActif : styles.badgeInactif}`}>
-                      {ens.statut}
+                      {ens.statut || 'Non défini'}
                     </span>
                   </td>
                   <td>
@@ -211,13 +242,13 @@ export default function GestionEnseignants() {
                         Voir
                       </button>
                       <button 
-                        onClick={() => changerStatut(ens.id)}
+                        onClick={() => changerStatut(ens.id_enseignant, ens.statut)}
                         className={`${styles.button} ${styles.buttonSmall} ${styles.buttonSecondary}`}
                       >
                         {ens.statut === 'Actif' ? 'Désactiver' : 'Activer'}
                       </button>
                       <button 
-                        onClick={() => supprimerEnseignant(ens.id)}
+                        onClick={() => supprimerEnseignant(ens.id_enseignant)}
                         className={`${styles.button} ${styles.buttonSmall} ${styles.buttonDanger}`}
                       >
                         Supprimer
@@ -352,15 +383,8 @@ export default function GestionEnseignants() {
               </div>
               <div style={{ padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
                 <p style={{ fontSize: '12px', color: '#999' }}>Statut</p>
-                <p style={{ fontWeight: '600' }}>{enseignantSelectionne.statut}</p>
+                <p style={{ fontWeight: '600' }}>{enseignantSelectionne.statut || 'Non défini'}</p>
               </div>
-            </div>
-
-            <div style={{ marginTop: '20px' }}>
-              <h4 style={{ marginBottom: '10px' }}>Disponibilités</h4>
-              <p style={{ color: '#666', fontSize: '14px' }}>
-                (Les disponibilités seront chargées depuis l'API)
-              </p>
             </div>
 
             <button 
