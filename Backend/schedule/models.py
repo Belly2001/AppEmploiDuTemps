@@ -18,10 +18,27 @@ class Administrateur(models.Model):
 class Cours(models.Model):
     num_cours = models.AutoField(primary_key=True)
     intitule = models.CharField(max_length=100)
+    type_cours = models.CharField(max_length=30)  # OBLIGATOIRE (DB: NOT NULL)
     heure_debut = models.TimeField()
     heure_fin = models.TimeField()
-    id_matiere = models.ForeignKey('Matiere', models.DO_NOTHING, db_column='id_matiere', blank=True, null=True)
-    id_enseignant = models.ForeignKey('Enseignant', models.DO_NOTHING, db_column='id_enseignant', blank=True, null=True)
+
+    id_matiere = models.ForeignKey(
+        'Matiere',
+        models.DO_NOTHING,
+        db_column='id_matiere',
+        to_field='id_matiere',
+        blank=True,
+        null=True
+    )
+
+    id_enseignant = models.ForeignKey(
+        'Enseignant',
+        models.DO_NOTHING,
+        db_column='id_enseignant',
+        to_field='id_enseignant',
+        blank=True,
+        null=True
+    )
 
     class Meta:
         managed = False
@@ -92,12 +109,13 @@ class EquipementSalle(models.Model):
 
 
 class Matiere(models.Model):
-    id_matiere = models.CharField(unique=True, max_length=20)
+    id_matiere = models.CharField(primary_key=True, max_length=20)
     nom_matiere = models.CharField(max_length=100)
 
     class Meta:
         managed = False
         db_table = 'matiere'
+
 
 
 class Notification(models.Model):
