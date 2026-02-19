@@ -39,7 +39,6 @@ CREATE TABLE salle (
 -- TABLE COURS
 CREATE TABLE cours (
     num_cours SERIAL PRIMARY KEY,
-    intitule VARCHAR(100) NOT NULL,
     type_cours VARCHAR(30) NOT NULL,
     heure_debut TIME NOT NULL,
     heure_fin TIME NOT NULL,
