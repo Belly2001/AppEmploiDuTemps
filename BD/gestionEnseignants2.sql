@@ -140,11 +140,11 @@ VALUES
 (2, 'Mardi', '08:00', '12:00', 'Disponible', 'Cours du matin'),
 (3, 'Jeudi', '10:00', '16:00', 'Disponible', 'Préféré pour TP');
 
-INSERT INTO cours (intitule, type_cours, heure_debut, heure_fin, id_matiere, id_enseignant)
+INSERT INTO cours (type_cours, heure_debut, heure_fin, id_matiere, id_enseignant)
 VALUES
-('Programmation Web', 'TD', '08:00', '10:00', 'INF101', 1),
-('Analyse Mathématique', 'TP', '10:00', '12:00', 'MAT201', 2),
-('Mécanique Générale', 'CM', '14:00', '16:00', 'PHY301', 3);
+('TD', '08:00', '10:00', 'INF101', 1),
+('TP', '10:00', '12:00', 'MAT201', 2),
+('CM', '14:00', '16:00', 'PHY301', 3);
 
 INSERT INTO emploi_du_temps (num_cours, id_salle, jour, date, statut)
 VALUES
