@@ -306,3 +306,15 @@ export async function apiGenererEDT(idFormation) {
   }
   return await res.json()
 }
+
+export async function getEDTFormation(idFormation) {
+  const res = await fetch(`${API_URL}/admin/formations/${idFormation}/edt/`)
+  if (!res.ok) throw new Error("Erreur chargement EDT formation")
+  return await res.json()
+}
+
+export async function getEDTPersonnel(idEnseignant) {
+  const res = await fetch(`${API_URL}/enseignant/${idEnseignant}/edt/`)
+  if (!res.ok) throw new Error("Erreur chargement EDT")
+  return await res.json()
+}

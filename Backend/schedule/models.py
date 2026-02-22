@@ -17,8 +17,7 @@ class Administrateur(models.Model):
 
 class Cours(models.Model):
     num_cours = models.AutoField(primary_key=True)
-    intitule = models.CharField(max_length=100)
-    type_cours = models.CharField(max_length=30)  # OBLIGATOIRE (DB: NOT NULL)
+    type_cours = models.CharField(max_length=30)
     heure_debut = models.TimeField()
     heure_fin = models.TimeField()
 
@@ -39,7 +38,6 @@ class Cours(models.Model):
         blank=True,
         null=True
     )
-    effectif = models.IntegerField(default=0)
 
     class Meta:
         managed = False

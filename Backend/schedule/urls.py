@@ -38,4 +38,5 @@ urlpatterns = [
     path('admin/formations/<int:id_formation>/enseignants/', views.enseignants_par_formation, name='enseignants_par_formation'),
     path('admin/recherche-enseignant/', views.rechercher_enseignant, name='rechercher_enseignant'),
     path('admin/formations/<int:id_formation>/generer-edt/', views.generer_edt, name='generer_edt'),
+    path('admin/formations/<int:id_formation>/edt/', views.edt_formation, name='edt_formation'),
 ]
