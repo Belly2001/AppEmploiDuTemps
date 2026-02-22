@@ -39,6 +39,7 @@ class Cours(models.Model):
         blank=True,
         null=True
     )
+    effectif = models.IntegerField(default=0)
 
     class Meta:
         managed = False
@@ -81,6 +82,7 @@ class Enseignant(models.Model):
     departement = models.CharField(max_length=100, blank=True, null=True)
     grade = models.CharField(max_length=50, blank=True, null=True)
     statut = models.CharField(max_length=20, blank=True, null=True)
+    premiere_connexion = models.BooleanField(default=True)
 
     class Meta:
         managed = False
@@ -111,6 +113,10 @@ class EquipementSalle(models.Model):
 class Matiere(models.Model):
     id_matiere = models.CharField(primary_key=True, max_length=20)
     nom_matiere = models.CharField(max_length=100)
+    id_formation = models.ForeignKey('Formation', models.DO_NOTHING, db_column='id_formation', blank=True, null=True)
+    nb_cm = models.IntegerField(default=1)
+    nb_td = models.IntegerField(default=1)
+    nb_tp = models.IntegerField(default=0)
 
     class Meta:
         managed = False
@@ -144,3 +150,29 @@ class Salle(models.Model):
     class Meta:
         managed = False
         db_table = 'salle'
+        
+class Formation(models.Model):
+    id_formation = models.AutoField(primary_key=True)
+    nom_formation = models.CharField(max_length=100)
+    niveau = models.CharField(max_length=10)
+    departement = models.CharField(max_length=100)
+    semestre_actuel = models.IntegerField(default=1)
+
+    class Meta:
+        managed = False
+        db_table = 'formation'
+
+class Demande(models.Model):
+    id_demande = models.AutoField(primary_key=True)
+    id_enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, db_column='id_enseignant')
+    type_demande = models.CharField(max_length=50)
+    sujet = models.CharField(max_length=200)
+    details = models.TextField(blank=True, null=True)
+    date_concernee = models.DateField(blank=True, null=True)
+    date_envoi = models.DateTimeField(auto_now_add=True)
+    statut = models.CharField(max_length=20, default='En attente')
+    reponse = models.TextField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'demande'

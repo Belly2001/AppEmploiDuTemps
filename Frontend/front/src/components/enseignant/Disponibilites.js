@@ -1,16 +1,12 @@
 import { useState, useEffect } from 'react'
 import styles from '@/styles/Enseignant.module.css'
+import { getDisponibilites, apiAjouterDisponibilite, apiSupprimerDisponibilite } from '@/services/api'
 
 export default function Disponibilites({ enseignant }) {
   
-  // Liste des disponibilités
-  // NOTE : Le backend n'a pas encore de route pour les disponibilités
-  // Les données sont gérées localement pour l'instant
   const [disponibilites, setDisponibilites] = useState([])
-  const [chargement, setChargement] = useState(false)
+  const [chargement, setChargement] = useState(true)
 
-  // État du formulaire pour ajouter une nouvelle dispo
-  // Noms des champs = noms dans le modèle Django (disponibilite)
   const [nouvelleDispo, setNouvelleDispo] = useState({
     jour: '',
     heure_debut: '',
@@ -18,23 +14,30 @@ export default function Disponibilites({ enseignant }) {
     commentaire: ''
   })
 
-  // Messages de feedback
   const [message, setMessage] = useState({ type: '', texte: '' })
 
-  // Liste des jours de la semaine
   const jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
 
-  // TODO: Charger les disponibilités depuis l'API quand la route sera prête
-  // useEffect(() => {
-  //   if (enseignant && enseignant.id_enseignant) {
-  //     fetch(`http://localhost:8000/schedule/enseignant/${enseignant.id_enseignant}/disponibilites/`)
-  //       .then(res => res.json())
-  //       .then(data => setDisponibilites(data))
-  //       .catch(err => console.error(err))
-  //   }
-  // }, [enseignant])
+  // Charger les disponibilités depuis la base
+  useEffect(() => {
+    if (enseignant && enseignant.id) {
+      chargerDisponibilites()
+    }
+  }, [enseignant])
 
-  // Gestion des changements dans le formulaire
+  const chargerDisponibilites = async () => {
+    try {
+      setChargement(true)
+      const data = await getDisponibilites(enseignant.id)
+      setDisponibilites(data)
+    } catch (err) {
+      console.error('Erreur chargement disponibilités:', err)
+      setMessage({ type: 'erreur', texte: 'Impossible de charger les disponibilités' })
+    } finally {
+      setChargement(false)
+    }
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target
     setNouvelleDispo(prev => ({
@@ -43,7 +46,7 @@ export default function Disponibilites({ enseignant }) {
     }))
   }
 
-  // Ajouter une nouvelle disponibilité
+  // Ajouter une disponibilité — sauvegardée en base
   const ajouterDisponibilite = async (e) => {
     e.preventDefault()
 
@@ -57,53 +60,51 @@ export default function Disponibilites({ enseignant }) {
       return
     }
 
-    const newDispo = {
-      id_disponibilite: Date.now(), // ID temporaire
-      ...nouvelleDispo
+    try {
+      await apiAjouterDisponibilite(enseignant.id, {
+        jour: nouvelleDispo.jour,
+        heure_debut: nouvelleDispo.heure_debut,
+        heure_fin: nouvelleDispo.heure_fin,
+        type_disponibilite: 'Disponible',
+        commentaire: nouvelleDispo.commentaire || ''
+      })
+      await chargerDisponibilites()
+      setNouvelleDispo({ jour: '', heure_debut: '', heure_fin: '', commentaire: '' })
+      setMessage({ type: 'succes', texte: 'Disponibilité ajoutée et sauvegardée !' })
+      setTimeout(() => setMessage({ type: '', texte: '' }), 3000)
+    } catch (err) {
+      console.error('Erreur ajout:', err)
+      setMessage({ type: 'erreur', texte: "Erreur lors de l'ajout de la disponibilité" })
     }
-
-    // TODO: Envoyer à l'API quand la route sera prête
-    // try {
-    //   const res = await fetch(`http://localhost:8000/schedule/enseignant/${enseignant.id_enseignant}/disponibilites/`, {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({
-    //       id_enseignant: enseignant.id_enseignant,
-    //       jour: nouvelleDispo.jour,
-    //       heure_debut: nouvelleDispo.heure_debut,
-    //       heure_fin: nouvelleDispo.heure_fin,
-    //       commentaire: nouvelleDispo.commentaire,
-    //       type_disponibilite: 'Disponible'
-    //     })
-    //   })
-    //   if (res.ok) { ... }
-    // } catch (err) { ... }
-
-    setDisponibilites(prev => [...prev, newDispo])
-    setNouvelleDispo({ jour: '', heure_debut: '', heure_fin: '', commentaire: '' })
-    setMessage({ type: 'succes', texte: 'Disponibilité ajoutée (locale, pas encore sauvegardée en BDD)' })
-    setTimeout(() => setMessage({ type: '', texte: '' }), 3000)
   }
 
-  // Supprimer une disponibilité
-  const supprimerDisponibilite = (id) => {
+  // Supprimer une disponibilité — supprimée en base
+  const supprimerDisponibilite = async (id_disponibilite) => {
     if (confirm('Voulez-vous vraiment supprimer cette disponibilité ?')) {
-      setDisponibilites(prev => prev.filter(d => d.id_disponibilite !== id))
-      setMessage({ type: 'succes', texte: 'Disponibilité supprimée' })
-      setTimeout(() => setMessage({ type: '', texte: '' }), 3000)
+      try {
+        await apiSupprimerDisponibilite(id_disponibilite)
+        await chargerDisponibilites()
+        setMessage({ type: 'succes', texte: 'Disponibilité supprimée' })
+        setTimeout(() => setMessage({ type: '', texte: '' }), 3000)
+      } catch (err) {
+        console.error('Erreur suppression:', err)
+        setMessage({ type: 'erreur', texte: 'Erreur lors de la suppression' })
+      }
     }
+  }
+
+  if (chargement) {
+    return <div style={{ textAlign: 'center', padding: '50px', color: '#666' }}>Chargement des disponibilités...</div>
   }
 
   return (
     <div>
-      {/* Message de feedback */}
       {message.texte && (
         <div className={message.type === 'succes' ? styles.successMessage : styles.errorMessage}>
           {message.texte}
         </div>
       )}
 
-      {/* Section : Ajouter une disponibilité */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <h3 className={styles.cardTitle}>Ajouter une disponibilité</h3>
@@ -167,7 +168,6 @@ export default function Disponibilites({ enseignant }) {
         </form>
       </div>
 
-      {/* Section : Liste des disponibilités */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <h3 className={styles.cardTitle}>Mes disponibilités actuelles</h3>

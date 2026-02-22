@@ -1,63 +1,38 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styles from '@/styles/Admin.module.css'
+import { getDemandesAdmin, apiRepondreDemande } from '@/services/api'
 
 export default function GestionDemandes() {
   
-  // Liste des demandes reçues (simulation)
-  const [demandes, setDemandes] = useState([
-    { 
-      id: 1, 
-      type: 'empechement', 
-      sujet: 'Absence cours du 15 novembre', 
-      details: 'Je ne pourrai pas assurer mon cours de Programmation Web prévu le 15 novembre pour raisons médicales.',
-      date: '2025-11-15',
-      dateEnvoi: '2025-11-10 14:30',
-      enseignant: { nom: 'Sane', prenom: 'Moussa', email: 'moussa.sane@univ.com' },
-      statut: 'En attente',
-      reponse: null
-    },
-    { 
-      id: 2, 
-      type: 'echange_salle', 
-      sujet: 'Demande changement de salle pour TP', 
-      details: 'Je souhaiterais changer la salle B2 pour la salle A1 car j\'ai besoin des ordinateurs pour mon TP.',
-      date: '2025-11-12',
-      dateEnvoi: '2025-11-08 09:15',
-      enseignant: { nom: 'Izere', prenom: 'Divan', email: 'divan.izere@univ.com' },
-      statut: 'En attente',
-      reponse: null
-    },
-    { 
-      id: 3, 
-      type: 'probleme', 
-      sujet: 'Vidéoprojecteur en panne', 
-      details: 'Le vidéoprojecteur de la salle C3 ne fonctionne plus depuis ce matin.',
-      date: '2025-11-10',
-      dateEnvoi: '2025-11-09 16:00',
-      enseignant: { nom: 'Ali', prenom: 'Hassane', email: 'hassane.ali@univ.com' },
-      statut: 'Acceptée',
-      reponse: 'Un technicien interviendra demain matin.'
-    }
-  ])
-
-  // Modal pour répondre
+  const [demandes, setDemandes] = useState([])
+  const [chargement, setChargement] = useState(true)
   const [modalOuvert, setModalOuvert] = useState(false)
   const [demandeSelectionnee, setDemandeSelectionnee] = useState(null)
   const [reponse, setReponse] = useState('')
-
-  // Message
   const [message, setMessage] = useState({ type: '', texte: '' })
-
-  // Filtre
   const [filtreStatut, setFiltreStatut] = useState('tous')
 
-  // Filtrer les demandes
+  useEffect(() => {
+    chargerDemandes()
+  }, [])
+
+  const chargerDemandes = async () => {
+    try {
+      setChargement(true)
+      const data = await getDemandesAdmin()
+      setDemandes(data)
+    } catch (err) {
+      console.error('Erreur chargement demandes:', err)
+    } finally {
+      setChargement(false)
+    }
+  }
+
   const demandesFiltrees = demandes.filter(d => {
     if (filtreStatut === 'tous') return true
     return d.statut === filtreStatut
   })
 
-  // Icône selon le type
   const getIcon = (type) => {
     switch (type) {
       case 'empechement': return '🚫'
@@ -67,7 +42,6 @@ export default function GestionDemandes() {
     }
   }
 
-  // Label du type
   const getTypeLabel = (type) => {
     switch (type) {
       case 'empechement': return 'Empêchement'
@@ -77,50 +51,49 @@ export default function GestionDemandes() {
     }
   }
 
-  // Ouvrir le modal de réponse
   const ouvrirModal = (demande) => {
     setDemandeSelectionnee(demande)
     setReponse(demande.reponse || '')
     setModalOuvert(true)
   }
 
-  // Répondre à une demande
-  const repondre = (statut) => {
+  const repondre = async (statut) => {
     if (!reponse.trim() && statut !== 'Refusée') {
       setMessage({ type: 'erreur', texte: 'Veuillez écrire une réponse' })
       return
     }
 
-    setDemandes(prev => prev.map(d => {
-      if (d.id === demandeSelectionnee.id) {
-        return { ...d, statut, reponse: reponse.trim() || 'Demande refusée.' }
-      }
-      return d
-    }))
-
-    setModalOuvert(false)
-    setDemandeSelectionnee(null)
-    setReponse('')
-    setMessage({ type: 'succes', texte: `Demande ${statut.toLowerCase()} !` })
-    setTimeout(() => setMessage({ type: '', texte: '' }), 3000)
-
-    // TODO: Appel API + Envoyer notification à l'enseignant
-    console.log('Réponse envoyée:', { demande: demandeSelectionnee.id, statut, reponse })
+    try {
+      await apiRepondreDemande(demandeSelectionnee.id_demande, {
+        statut: statut,
+        reponse: reponse.trim() || 'Demande refusée.'
+      })
+      await chargerDemandes()
+      setModalOuvert(false)
+      setDemandeSelectionnee(null)
+      setReponse('')
+      setMessage({ type: 'succes', texte: `Demande ${statut.toLowerCase()} !` })
+      setTimeout(() => setMessage({ type: '', texte: '' }), 3000)
+    } catch (err) {
+      console.error('Erreur réponse:', err)
+      setMessage({ type: 'erreur', texte: 'Erreur lors de la réponse' })
+    }
   }
 
-  // Compter les demandes
   const nbEnAttente = demandes.filter(d => d.statut === 'En attente').length
+
+  if (chargement) {
+    return <div style={{ textAlign: 'center', padding: '50px', color: '#666' }}>Chargement des demandes...</div>
+  }
 
   return (
     <div>
-      {/* Message de feedback */}
       {message.texte && (
         <div className={message.type === 'succes' ? styles.successMessage : styles.errorMessage}>
           {message.texte}
         </div>
       )}
 
-      {/* Stats rapides */}
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
           <div className={`${styles.statIcon} ${styles.statIconBlue}`}>📨</div>
@@ -152,7 +125,6 @@ export default function GestionDemandes() {
         </div>
       </div>
 
-      {/* Liste des demandes */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <h3 className={styles.cardTitle}>
@@ -165,14 +137,8 @@ export default function GestionDemandes() {
           </h3>
         </div>
 
-        {/* Filtres */}
         <div className={styles.filterBar}>
-          <select
-            value={filtreStatut}
-            onChange={(e) => setFiltreStatut(e.target.value)}
-            className={styles.select}
-            style={{ width: '200px' }}
-          >
+          <select value={filtreStatut} onChange={(e) => setFiltreStatut(e.target.value)} className={styles.select} style={{ width: '200px' }}>
             <option value="tous">Tous les statuts</option>
             <option value="En attente">En attente</option>
             <option value="Acceptée">Acceptées</option>
@@ -180,7 +146,6 @@ export default function GestionDemandes() {
           </select>
         </div>
 
-        {/* Liste */}
         {demandesFiltrees.length === 0 ? (
           <div className={styles.emptyState}>
             <div className={styles.emptyIcon}>📭</div>
@@ -192,18 +157,15 @@ export default function GestionDemandes() {
         ) : (
           <div className={styles.demandesList}>
             {demandesFiltrees.map((demande) => (
-              <div 
-                key={demande.id} 
-                className={`${styles.demandeItem} ${demande.statut === 'En attente' ? styles.demandeNouvelle : ''}`}
-              >
-                <span className={styles.demandeIcon}>{getIcon(demande.type)}</span>
+              <div key={demande.id_demande} className={`${styles.demandeItem} ${demande.statut === 'En attente' ? styles.demandeNouvelle : ''}`}>
+                <span className={styles.demandeIcon}>{getIcon(demande.type_demande)}</span>
                 
                 <div className={styles.demandeContent}>
                   <div className={styles.demandeHeader}>
                     <div>
                       <div className={styles.demandeTitre}>{demande.sujet}</div>
                       <div className={styles.demandeAuteur}>
-                        De : {demande.enseignant.prenom} {demande.enseignant.nom} ({demande.enseignant.email})
+                        De : {demande.enseignant_prenom} {demande.enseignant_nom} ({demande.enseignant_email})
                       </div>
                     </div>
                     <span className={`${styles.badge} ${
@@ -216,16 +178,18 @@ export default function GestionDemandes() {
                   </div>
 
                   <div style={{ marginBottom: '10px' }}>
-                    <span style={{ fontSize: '12px', color: '#999', marginRight: '15px' }}>
-                      📅 Date concernée : {demande.date}
-                    </span>
+                    {demande.date_concernee && (
+                      <span style={{ fontSize: '12px', color: '#999', marginRight: '15px' }}>
+                        📅 Date concernée : {demande.date_concernee}
+                      </span>
+                    )}
                     <span style={{ fontSize: '12px', color: '#999' }}>
-                      🕐 Envoyé le : {demande.dateEnvoi}
+                      🕐 Envoyé le : {new Date(demande.date_envoi).toLocaleString('fr-FR')}
                     </span>
                   </div>
 
                   <div className={styles.demandeMessage}>
-                    <strong>Type :</strong> {getTypeLabel(demande.type)}<br/><br/>
+                    <strong>Type :</strong> {getTypeLabel(demande.type_demande)}<br/><br/>
                     {demande.details}
                   </div>
 
@@ -237,19 +201,11 @@ export default function GestionDemandes() {
 
                   <div className={styles.demandeActions}>
                     {demande.statut === 'En attente' ? (
-                      <>
-                        <button 
-                          onClick={() => ouvrirModal(demande)}
-                          className={`${styles.button} ${styles.buttonSmall} ${styles.buttonSuccess}`}
-                        >
-                          Répondre
-                        </button>
-                      </>
+                      <button onClick={() => ouvrirModal(demande)} className={`${styles.button} ${styles.buttonSmall} ${styles.buttonSuccess}`}>
+                        Répondre
+                      </button>
                     ) : (
-                      <button 
-                        onClick={() => ouvrirModal(demande)}
-                        className={`${styles.button} ${styles.buttonSmall} ${styles.buttonSecondary}`}
-                      >
+                      <button onClick={() => ouvrirModal(demande)} className={`${styles.button} ${styles.buttonSmall} ${styles.buttonSecondary}`}>
                         Voir / Modifier
                       </button>
                     )}
@@ -261,7 +217,6 @@ export default function GestionDemandes() {
         )}
       </div>
 
-      {/* Modal : Répondre à une demande */}
       {modalOuvert && demandeSelectionnee && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
@@ -273,7 +228,7 @@ export default function GestionDemandes() {
             <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
               <p style={{ fontWeight: '600', marginBottom: '5px' }}>{demandeSelectionnee.sujet}</p>
               <p style={{ fontSize: '14px', color: '#666' }}>
-                De : {demandeSelectionnee.enseignant.prenom} {demandeSelectionnee.enseignant.nom}
+                De : {demandeSelectionnee.enseignant_prenom} {demandeSelectionnee.enseignant_nom}
               </p>
               <p style={{ fontSize: '13px', color: '#888', marginTop: '10px' }}>
                 {demandeSelectionnee.details}
@@ -282,33 +237,13 @@ export default function GestionDemandes() {
 
             <div className={styles.formGroup}>
               <label className={styles.label}>Votre réponse</label>
-              <textarea
-                value={reponse}
-                onChange={(e) => setReponse(e.target.value)}
-                className={styles.textarea}
-                placeholder="Écrivez votre réponse à l'enseignant..."
-              />
+              <textarea value={reponse} onChange={(e) => setReponse(e.target.value)} className={styles.textarea} placeholder="Écrivez votre réponse à l'enseignant..." />
             </div>
 
             <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-              <button 
-                onClick={() => repondre('Acceptée')}
-                className={`${styles.button} ${styles.buttonSuccess}`}
-              >
-                ✅ Accepter
-              </button>
-              <button 
-                onClick={() => repondre('Refusée')}
-                className={`${styles.button} ${styles.buttonDanger}`}
-              >
-                ❌ Refuser
-              </button>
-              <button 
-                onClick={() => setModalOuvert(false)}
-                className={`${styles.button} ${styles.buttonSecondary}`}
-              >
-                Annuler
-              </button>
+              <button onClick={() => repondre('Acceptée')} className={`${styles.button} ${styles.buttonSuccess}`}>✅ Accepter</button>
+              <button onClick={() => repondre('Refusée')} className={`${styles.button} ${styles.buttonDanger}`}>❌ Refuser</button>
+              <button onClick={() => setModalOuvert(false)} className={`${styles.button} ${styles.buttonSecondary}`}>Annuler</button>
             </div>
           </div>
         </div>

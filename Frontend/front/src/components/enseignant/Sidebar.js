@@ -1,24 +1,22 @@
 import styles from '@/styles/Enseignant.module.css'
+import { FaClock, FaCalendarAlt, FaEnvelopeOpenText, FaBell, FaUserCircle } from 'react-icons/fa'
 
 export default function Sidebar({ sectionActive, changerSection }) {
   
-  // Liste des éléments du menu
   const menuItems = [
-    { id: 'disponibilites', label: 'Disponibilités', icon: '🕐' },
-    { id: 'emploi', label: 'Emploi du temps', icon: '📅' },
-    { id: 'demandes', label: 'Mes demandes', icon: '📨' },
-    { id: 'notifications', label: 'Notifications', icon: '🔔' },
-    { id: 'profil', label: 'Mon profil', icon: '👤' }
+    { id: 'disponibilites', label: 'Disponibilités', icon: <FaClock size={20} /> },
+    { id: 'emploi', label: 'Emploi du temps', icon: <FaCalendarAlt size={20} /> },
+    { id: 'demandes', label: 'Mes demandes', icon: <FaEnvelopeOpenText size={20} /> },
+    { id: 'notifications', label: 'Notifications', icon: <FaBell size={20} /> },
+    { id: 'profil', label: 'Mon profil', icon: <FaUserCircle size={20} /> }
   ]
 
   return (
     <aside className={styles.sidebar}>
-      {/* Logo / Titre de l'app */}
       <div className={styles.sidebarHeader}>
         <h1 className={styles.logo}>Schedule APP</h1>
       </div>
 
-      {/* Navigation */}
       <nav className={styles.sidebarNav}>
         {menuItems.map((item) => (
           <button

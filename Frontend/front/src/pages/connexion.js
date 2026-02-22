@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import styles from '@/styles/Connexion.module.css'
+import { loginUser } from '@/services/api'
 
 export default function Connexion() {
   const [email, setEmail] = useState('')
@@ -16,33 +17,13 @@ export default function Connexion() {
     setChargement(true)
 
     try {
-      // TODO: Le backend n'a pas encore de route /login
-      // Quand elle sera prête, décommente ce bloc :
-      //
-      // const res = await fetch('http://localhost:8000/schedule/login/', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email, mot_de_passe: password })
-      // })
-      //
-      // if (!res.ok) {
-      //   setErreur('Email ou mot de passe incorrect')
-      //   return
-      // }
-      //
-      // const data = await res.json()
-      // localStorage.setItem('user', JSON.stringify(data))
-      //
-      // if (data.role === 'admin') {
-      //   router.push('/admin')
-      // } else {
-      //   router.push('/enseignant')
-      // }
+      const data = await loginUser(email, password)
 
-      // SIMULATION en attendant la route login
-      console.log('Connexion:', { email, password })
-      
-      if (email.includes('admin')) {
+      // Stocker les infos de l'utilisateur connecté
+      localStorage.setItem('user', JSON.stringify(data))
+
+      // Rediriger selon le rôle
+      if (data.role === 'admin') {
         router.push('/admin')
       } else {
         router.push('/enseignant')
@@ -50,7 +31,7 @@ export default function Connexion() {
 
     } catch (err) {
       console.error('Erreur connexion:', err)
-      setErreur('Erreur de connexion au serveur')
+      setErreur(err.message || 'Erreur de connexion au serveur')
     } finally {
       setChargement(false)
     }

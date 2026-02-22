@@ -84,8 +84,9 @@
   margin-left: 260px;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  max-width: calc(100vw - 260px);
 }
-
 /* ----- HEADER (barre du haut) ----- */
 .header {
   background-color: white;
@@ -201,6 +202,7 @@
   padding: 25px;
   box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
   margin-bottom: 25px;
+  overflow: hidden;
 }
 
 .cardHeader {
@@ -323,6 +325,7 @@
 /* ----- TABLEAUX ----- */
 .table {
   width: 100%;
+  min-width: 700px;
   border-collapse: collapse;
 }
 
@@ -645,6 +648,12 @@
 .searchInput:focus {
   outline: none;
   border-color: #1a1a2e;
+}
+
+/* ----- TABLE RESPONSIVE ----- */
+.tableWrapper {
+  overflow-x: auto;
+  width: 100%;
 }
 
 /* ----- RESPONSIVE ----- */

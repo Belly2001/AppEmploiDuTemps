@@ -1,60 +1,65 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styles from '@/styles/Enseignant.module.css'
+import { getNotificationsEnseignant } from '@/services/api'
 
 export default function Notifications({ enseignant }) {
   
-  // Liste des notifications (simulation)
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      titre: 'Nouveau cours ajouté',
-      message: 'Un cours de Programmation Web vous a été assigné pour le lundi 8h-10h.',
-      date: '2025-11-10 14:30',
-      lue: false
-    },
-    {
-      id: 2,
-      titre: 'Changement de salle',
-      message: 'Votre cours du mardi a été déplacé en salle B2.',
-      date: '2025-11-09 09:15',
-      lue: true
-    },
-    {
-      id: 3,
-      titre: 'Réponse à votre demande',
-      message: 'L\'administration a accepté votre demande d\'absence du 15 novembre.',
-      date: '2025-11-08 16:45',
-      lue: true
-    }
-  ])
+  const [notifications, setNotifications] = useState([])
+  const [chargement, setChargement] = useState(true)
 
-  // Marquer une notification comme lue
-  const marquerCommeLue = (id) => {
-    setNotifications(prev =>
-      prev.map(notif =>
-        notif.id === id ? { ...notif, lue: true } : notif
-      )
-    )
-    // TODO: Appel API pour mettre à jour en BDD
-    console.log('Notification marquée comme lue:', id)
+  // Charger les notifications depuis la base
+  useEffect(() => {
+    if (enseignant && enseignant.id) {
+      chargerNotifications()
+    }
+  }, [enseignant])
+
+  const chargerNotifications = async () => {
+    try {
+      setChargement(true)
+      const data = await getNotificationsEnseignant(enseignant.id)
+      setNotifications(data)
+    } catch (err) {
+      console.error('Erreur chargement notifications:', err)
+    } finally {
+      setChargement(false)
+    }
+  }
+
+  // Marquer comme lue via API
+  const marquerCommeLue = async (id_notification) => {
+    try {
+      await fetch(`http://localhost:8000/schedule/notification/${id_notification}/lue/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      await chargerNotifications()
+    } catch (err) {
+      console.error('Erreur marquage notification:', err)
+    }
   }
 
   // Marquer toutes comme lues
-  const toutMarquerCommeLu = () => {
-    setNotifications(prev =>
-      prev.map(notif => ({ ...notif, lue: true }))
-    )
-    // TODO: Appel API
+  const toutMarquerCommeLu = async () => {
+    try {
+      const nonLues = notifications.filter(n => !n.est_lue)
+      for (const notif of nonLues) {
+        await fetch(`http://localhost:8000/schedule/notification/${notif.id_notification}/lue/`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' }
+        })
+      }
+      await chargerNotifications()
+    } catch (err) {
+      console.error('Erreur marquage notifications:', err)
+    }
   }
 
-  // Supprimer une notification
-  const supprimerNotification = (id) => {
-    setNotifications(prev => prev.filter(n => n.id !== id))
-    // TODO: Appel API
-  }
+  const nbNonLues = notifications.filter(n => !n.est_lue).length
 
-  // Compter les non lues
-  const nbNonLues = notifications.filter(n => !n.lue).length
+  if (chargement) {
+    return <div style={{ textAlign: 'center', padding: '50px', color: '#666' }}>Chargement des notifications...</div>
+  }
 
   return (
     <div>
@@ -98,35 +103,21 @@ export default function Notifications({ enseignant }) {
           <div className={styles.notifList}>
             {notifications.map((notif) => (
               <div
-                key={notif.id}
-                className={`${styles.notifItem} ${!notif.lue ? styles.notifNonLue : ''}`}
-                onClick={() => !notif.lue && marquerCommeLue(notif.id)}
-                style={{ cursor: !notif.lue ? 'pointer' : 'default' }}
+                key={notif.id_notification}
+                className={`${styles.notifItem} ${!notif.est_lue ? styles.notifNonLue : ''}`}
+                onClick={() => !notif.est_lue && marquerCommeLue(notif.id_notification)}
+                style={{ cursor: !notif.est_lue ? 'pointer' : 'default' }}
               >
                 <span className={styles.notifIcon}>
-                  {!notif.lue ? '🔵' : '⚪'}
+                  {!notif.est_lue ? '🔵' : '⚪'}
                 </span>
                 <div className={styles.notifContent}>
                   <div className={styles.notifTitre}>{notif.titre}</div>
                   <div className={styles.notifMessage}>{notif.message}</div>
-                  <div className={styles.notifDate}>{notif.date}</div>
+                  <div className={styles.notifDate}>
+                    {new Date(notif.date_envoi).toLocaleString('fr-FR')}
+                  </div>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    supprimerNotification(notif.id)
-                  }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '18px',
-                    color: '#999'
-                  }}
-                  title="Supprimer"
-                >
-                  ✕
-                </button>
               </div>
             ))}
           </div>

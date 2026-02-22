@@ -1,26 +1,26 @@
 import styles from '@/styles/Admin.module.css'
+import { HiOutlineBuildingLibrary } from 'react-icons/hi2'
+import { FaChalkboardTeacher, FaDoorOpen, FaCalendarAlt, FaEnvelopeOpenText, FaBell, FaUserCircle } from 'react-icons/fa'
 
 export default function SidebarAdmin({ sectionActive, changerSection }) {
   
-  // Liste des éléments du menu admin
   const menuItems = [
-    { id: 'enseignants', label: 'Enseignants', icon: '👥' },
-    { id: 'salles', label: 'Salles', icon: '🏫' },
-    { id: 'edt', label: 'Emplois du temps', icon: '📅' },
-    { id: 'demandes', label: 'Demandes', icon: '📨' },
-    { id: 'notifications', label: 'Notifications', icon: '🔔' },
-    { id: 'profil', label: 'Mon profil', icon: '👤' }
+    { id: 'departements', label: 'Départements', icon: <HiOutlineBuildingLibrary size={20} /> },
+    { id: 'enseignants', label: 'Enseignants', icon: <FaChalkboardTeacher size={20} /> },
+    { id: 'salles', label: 'Salles', icon: <FaDoorOpen size={20} /> },
+    { id: 'edt', label: 'Emplois du temps', icon: <FaCalendarAlt size={20} /> },
+    { id: 'demandes', label: 'Demandes', icon: <FaEnvelopeOpenText size={20} /> },
+    { id: 'notifications', label: 'Notifications', icon: <FaBell size={20} /> },
+    { id: 'profil', label: 'Mon profil', icon: <FaUserCircle size={20} /> }
   ]
 
   return (
     <aside className={styles.sidebar}>
-      {/* Logo / Titre de l'app */}
       <div className={styles.sidebarHeader}>
         <h1 className={styles.logo}>Schedule APP</h1>
         <p className={styles.logoSub}>Espace Administration</p>
       </div>
 
-      {/* Navigation */}
       <nav className={styles.sidebarNav}>
         {menuItems.map((item) => (
           <button

@@ -1,39 +1,44 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styles from '@/styles/Admin.module.css'
+import { getEnseignants, apiEnvoyerNotification } from '@/services/api'
 
 export default function EnvoyerNotification() {
   
-  // Liste des enseignants (simulation)
-  const enseignants = [
-    { id: 1, nom: 'Sane', prenom: 'Moussa', email: 'moussa.sane@univ.com' },
-    { id: 2, nom: 'Izere', prenom: 'Divan', email: 'divan.izere@univ.com' },
-    { id: 3, nom: 'Ali', prenom: 'Hassane', email: 'hassane.ali@univ.com' }
-  ]
+  const [enseignants, setEnseignants] = useState([])
+  const [chargement, setChargement] = useState(true)
 
-  // Formulaire
   const [formData, setFormData] = useState({
-    destinataire: '', // 'tous' ou id de l'enseignant
+    destinataire: '',
     titre: '',
     message: ''
   })
 
-  // Historique des notifications envoyées
-  const [notificationsEnvoyees, setNotificationsEnvoyees] = useState([
-    { id: 1, titre: 'Réunion pédagogique', destinataire: 'Tous les enseignants', date: '2025-11-10 10:00' },
-    { id: 2, titre: 'Changement de salle', destinataire: 'Moussa Sane', date: '2025-11-09 14:30' }
-  ])
-
-  // Message
+  const [notificationsEnvoyees, setNotificationsEnvoyees] = useState([])
   const [message, setMessage] = useState({ type: '', texte: '' })
 
-  // Gestion du formulaire
+  // Charger les enseignants depuis la base
+  useEffect(() => {
+    chargerEnseignants()
+  }, [])
+
+  const chargerEnseignants = async () => {
+    try {
+      const data = await getEnseignants()
+      setEnseignants(data)
+    } catch (err) {
+      console.error('Erreur chargement enseignants:', err)
+    } finally {
+      setChargement(false)
+    }
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  // Envoyer la notification
-  const envoyerNotification = (e) => {
+  // Envoyer la notification via l'API
+  const envoyerNotification = async (e) => {
     e.preventDefault()
 
     if (!formData.destinataire || !formData.titre || !formData.message) {
@@ -41,30 +46,56 @@ export default function EnvoyerNotification() {
       return
     }
 
-    // Trouver le nom du destinataire
-    let nomDestinataire = 'Tous les enseignants'
-    if (formData.destinataire !== 'tous') {
-      const ens = enseignants.find(e => e.id === parseInt(formData.destinataire))
-      if (ens) nomDestinataire = `${ens.prenom} ${ens.nom}`
+    // Récupérer l'admin connecté
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+
+    try {
+      if (formData.destinataire === 'tous') {
+        // Envoyer à tous les enseignants
+        for (const ens of enseignants) {
+          await apiEnvoyerNotification({
+            destinataire_type: 'Enseignant',
+            id_enseignant: ens.id_enseignant,
+            id_admin: user.id,
+            titre: formData.titre,
+            message: formData.message
+          })
+        }
+      } else {
+        // Envoyer à un seul enseignant
+        await apiEnvoyerNotification({
+          destinataire_type: 'Enseignant',
+          id_enseignant: parseInt(formData.destinataire),
+          id_admin: user.id,
+          titre: formData.titre,
+          message: formData.message
+        })
+      }
+
+      // Trouver le nom du destinataire pour l'historique
+      let nomDestinataire = 'Tous les enseignants'
+      if (formData.destinataire !== 'tous') {
+        const ens = enseignants.find(e => e.id_enseignant === parseInt(formData.destinataire))
+        if (ens) nomDestinataire = `${ens.prenom} ${ens.nom}`
+      }
+
+      setNotificationsEnvoyees(prev => [{
+        id: Date.now(),
+        titre: formData.titre,
+        destinataire: nomDestinataire,
+        date: new Date().toLocaleString('fr-FR')
+      }, ...prev])
+
+      setFormData({ destinataire: '', titre: '', message: '' })
+      setMessage({ type: 'succes', texte: 'Notification envoyée avec succès !' })
+      setTimeout(() => setMessage({ type: '', texte: '' }), 3000)
+
+    } catch (err) {
+      console.error('Erreur envoi notification:', err)
+      setMessage({ type: 'erreur', texte: "Erreur lors de l'envoi de la notification" })
     }
-
-    const nouvelleNotif = {
-      id: Date.now(),
-      titre: formData.titre,
-      destinataire: nomDestinataire,
-      date: new Date().toLocaleString('fr-FR')
-    }
-
-    setNotificationsEnvoyees(prev => [nouvelleNotif, ...prev])
-    setFormData({ destinataire: '', titre: '', message: '' })
-    setMessage({ type: 'succes', texte: 'Notification envoyée avec succès !' })
-    setTimeout(() => setMessage({ type: '', texte: '' }), 3000)
-
-    // TODO: Appel API
-    console.log('Notification envoyée:', { ...formData, nomDestinataire })
   }
 
-  // Modèles de notifications prédéfinis
   const modeles = [
     { titre: 'Changement de salle', message: 'Votre cours a été déplacé. Veuillez consulter votre emploi du temps pour voir la nouvelle salle assignée.' },
     { titre: 'Cours annulé', message: 'Un de vos cours a été annulé. Veuillez consulter votre emploi du temps pour plus de détails.' },
@@ -72,7 +103,6 @@ export default function EnvoyerNotification() {
     { titre: 'Mise à jour emploi du temps', message: 'Votre emploi du temps a été mis à jour. Veuillez le consulter.' }
   ]
 
-  // Appliquer un modèle
   const appliquerModele = (modele) => {
     setFormData(prev => ({
       ...prev,
@@ -81,22 +111,23 @@ export default function EnvoyerNotification() {
     }))
   }
 
+  if (chargement) {
+    return <div style={{ textAlign: 'center', padding: '50px', color: '#666' }}>Chargement...</div>
+  }
+
   return (
     <div>
-      {/* Message de feedback */}
       {message.texte && (
         <div className={message.type === 'succes' ? styles.successMessage : styles.errorMessage}>
           {message.texte}
         </div>
       )}
 
-      {/* Formulaire d'envoi */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <h3 className={styles.cardTitle}>Nouvelle notification</h3>
         </div>
 
-        {/* Modèles rapides */}
         <div style={{ marginBottom: '20px' }}>
           <p style={{ fontSize: '14px', color: '#666', marginBottom: '10px' }}>Modèles rapides :</p>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -125,7 +156,7 @@ export default function EnvoyerNotification() {
               <option value="tous">📢 Tous les enseignants</option>
               <optgroup label="Enseignants individuels">
                 {enseignants.map(ens => (
-                  <option key={ens.id} value={ens.id}>
+                  <option key={ens.id_enseignant} value={ens.id_enseignant}>
                     {ens.prenom} {ens.nom} ({ens.email})
                   </option>
                 ))}
@@ -162,7 +193,6 @@ export default function EnvoyerNotification() {
         </form>
       </div>
 
-      {/* Historique */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <h3 className={styles.cardTitle}>Historique des notifications</h3>
@@ -172,8 +202,8 @@ export default function EnvoyerNotification() {
         {notificationsEnvoyees.length === 0 ? (
           <div className={styles.emptyState}>
             <div className={styles.emptyIcon}>🔔</div>
-            <h4 className={styles.emptyTitle}>Aucune notification</h4>
-            <p className={styles.emptyText}>Vous n'avez pas encore envoyé de notification.</p>
+            <h4 className={styles.emptyTitle}>Aucune notification envoyée</h4>
+            <p className={styles.emptyText}>Les notifications envoyées durant cette session apparaîtront ici.</p>
           </div>
         ) : (
           <table className={styles.table}>

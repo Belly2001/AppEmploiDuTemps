@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import styles from '@/styles/Enseignant.module.css'
 
-// Import des composants (on les crée juste après)
 import Sidebar from '@/components/enseignant/Sidebar'
 import Header from '@/components/enseignant/Header'
+import PremiereConnexion from '@/components/enseignant/PremiereConnexion'
 import Disponibilites from '@/components/enseignant/Disponibilites'
 import EmploiDuTemps from '@/components/enseignant/EmploiDuTemps'
 import Demandes from '@/components/enseignant/Demandes'
@@ -13,34 +13,87 @@ import Profil from '@/components/enseignant/Profil'
 
 export default function EnseignantDashboard() {
   const router = useRouter()
-
-  // Section active (par défaut : disponibilités, car c'est la première chose à remplir)
   const [sectionActive, setSectionActive] = useState('disponibilites')
+  const [premiereConnexion, setPremiereConnexion] = useState(false)
 
-  // Données de l'enseignant (pour l'instant en dur, plus tard viendra de l'API)
   const [enseignant, setEnseignant] = useState({
-    id: 1,
-    nom: 'Dupont',
-    prenom: 'Marie',
-    email: 'marie.dupont@univ.fr',
-    departement: 'Informatique',
-    grade: 'Maître de conférences',
-    statut: 'Actif'
+    id: '',
+    nom: '',
+    prenom: '',
+    email: '',
+    departement: '',
+    grade: '',
+    statut: ''
   })
 
-  // Fonction pour changer de section
+  useEffect(() => {
+    const user = localStorage.getItem('user')
+    if (!user) {
+      router.push('/connexion')
+      return
+    }
+    const data = JSON.parse(user)
+    if (data.role !== 'enseignant') {
+      router.push('/connexion')
+      return
+    }
+    setEnseignant({
+      id: data.id,
+      nom: data.nom,
+      prenom: data.prenom,
+      email: data.email,
+      departement: data.departement || '',
+      grade: data.grade || '',
+      statut: data.statut || 'Actif'
+    })
+    // Détecter première connexion
+    if (data.premiere_connexion) {
+      setPremiereConnexion(true)
+    }
+  }, [])
+
+  const terminerPremiereConnexion = () => {
+    setPremiereConnexion(false)
+    // Mettre à jour localStorage
+    const user = JSON.parse(localStorage.getItem('user'))
+    user.premiere_connexion = false
+    localStorage.setItem('user', JSON.stringify(user))
+  }
+
   const changerSection = (nouvelleSection) => {
     setSectionActive(nouvelleSection)
   }
 
-  // Fonction de déconnexion
   const handleDeconnexion = () => {
-    // TODO: Vider la session / token
-    console.log('Déconnexion...')
+    localStorage.removeItem('user')
     router.push('/connexion')
   }
 
-  // Affiche le bon composant selon la section active
+  // Si première connexion, afficher le parcours de choix
+  if (premiereConnexion) {
+    return (
+      <div className={styles.dashboard}>
+        <Sidebar 
+          sectionActive="premiere-connexion" 
+          changerSection={() => {}} 
+        />
+        <div className={styles.mainContent}>
+          <Header 
+            titre="Bienvenue ! Configuration initiale"
+            enseignant={enseignant}
+            onDeconnexion={handleDeconnexion}
+          />
+          <div className={styles.content}>
+            <PremiereConnexion 
+              enseignant={enseignant} 
+              onTerminer={terminerPremiereConnexion}
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const afficherContenu = () => {
     switch (sectionActive) {
       case 'disponibilites':
@@ -58,7 +111,6 @@ export default function EnseignantDashboard() {
     }
   }
 
-  // Titres des sections pour le header
   const titresSection = {
     disponibilites: 'Mes disponibilités',
     emploi: 'Mon emploi du temps',
@@ -69,22 +121,16 @@ export default function EnseignantDashboard() {
 
   return (
     <div className={styles.dashboard}>
-      {/* Menu latéral gauche */}
       <Sidebar 
         sectionActive={sectionActive} 
         changerSection={changerSection} 
       />
-
-      {/* Zone principale (header + contenu) */}
       <div className={styles.mainContent}>
-        {/* Barre du haut */}
         <Header 
           titre={titresSection[sectionActive]}
           enseignant={enseignant}
           onDeconnexion={handleDeconnexion}
         />
-
-        {/* Contenu qui change selon la section */}
         <div className={styles.content}>
           {afficherContenu()}
         </div>

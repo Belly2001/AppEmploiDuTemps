@@ -1,8 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import styles from '@/styles/Admin.module.css'
 
-// Import des composants
 import SidebarAdmin from '@/components/admin/SidebarAdmin'
 import HeaderAdmin from '@/components/admin/HeaderAdmin'
 import GestionEnseignants from '@/components/admin/GestionEnseignants'
@@ -11,37 +10,58 @@ import GestionEDT from '@/components/admin/GestionEDT'
 import GestionDemandes from '@/components/admin/GestionDemandes'
 import EnvoyerNotification from '@/components/admin/EnvoyerNotification'
 import ProfilAdmin from '@/components/admin/ProfilAdmin'
+import GestionDepartements from '@/components/admin/GestionDepartements'
 
 export default function AdminDashboard() {
   const router = useRouter()
+  const [sectionActive, setSectionActive] = useState('departements')
 
-  // Section active (par défaut : gestion des enseignants)
-  const [sectionActive, setSectionActive] = useState('enseignants')
-
-  // Données de l'admin (simulation, viendra de l'API plus tard)
+  // Lire les infos de l'admin depuis localStorage (rempli lors de la connexion)
   const [admin, setAdmin] = useState({
-    id: 1,
-    nom: 'Sadia',
-    prenom: 'Emmanuel',
-    email: 'emmanuel.sadia@gmail.com',
-    poste: 'Responsable Pédagogique',
-    permissions: 'Gestion complète des emplois du temps'
+    id: '',
+    nom: '',
+    prenom: '',
+    email: '',
+    poste: '',
+    permissions: ''
   })
 
-  // Fonction pour changer de section
+  useEffect(() => {
+    const user = localStorage.getItem('user')
+    if (!user) {
+      // Pas connecté → retour à la connexion
+      router.push('/connexion')
+      return
+    }
+    const data = JSON.parse(user)
+    if (data.role !== 'admin') {
+      // Ce n'est pas un admin → retour à la connexion
+      router.push('/connexion')
+      return
+    }
+    setAdmin({
+      id: data.id,
+      nom: data.nom,
+      prenom: data.prenom,
+      email: data.email,
+      poste: data.poste || '',
+      permissions: data.permissions || ''
+    })
+  }, [])
+
   const changerSection = (nouvelleSection) => {
     setSectionActive(nouvelleSection)
   }
 
-  // Fonction de déconnexion
   const handleDeconnexion = () => {
-    console.log('Déconnexion admin...')
+    localStorage.removeItem('user')
     router.push('/connexion')
   }
 
-  // Affiche le bon composant selon la section active
   const afficherContenu = () => {
     switch (sectionActive) {
+      case 'departements':
+        return <GestionDepartements />
       case 'enseignants':
         return <GestionEnseignants />
       case 'salles':
@@ -59,8 +79,8 @@ export default function AdminDashboard() {
     }
   }
 
-  // Titres des sections pour le header
   const titresSection = {
+    departements: 'Départements & Formations',
     enseignants: 'Gestion des enseignants',
     salles: 'Gestion des salles',
     edt: 'Emplois du temps',
@@ -71,22 +91,16 @@ export default function AdminDashboard() {
 
   return (
     <div className={styles.dashboard}>
-      {/* Menu latéral gauche */}
       <SidebarAdmin 
         sectionActive={sectionActive} 
         changerSection={changerSection} 
       />
-
-      {/* Zone principale (header + contenu) */}
       <div className={styles.mainContent}>
-        {/* Barre du haut */}
         <HeaderAdmin 
           titre={titresSection[sectionActive]}
           admin={admin}
           onDeconnexion={handleDeconnexion}
         />
-
-        {/* Contenu qui change selon la section */}
         <div className={styles.content}>
           {afficherContenu()}
         </div>

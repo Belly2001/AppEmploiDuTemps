@@ -203,6 +203,7 @@ export default function GestionEnseignants() {
             </p>
           </div>
         ) : (
+        <div className={styles.tableWrapper}>
           <table className={styles.table}>
             <thead>
               <tr>
@@ -259,6 +260,7 @@ export default function GestionEnseignants() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
