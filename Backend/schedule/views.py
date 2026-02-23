@@ -3,6 +3,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
+from django.db import models
 from datetime import time, date, timedelta
 
 
@@ -388,8 +389,29 @@ def matieres_enseignant(request, id):
 def edt_enseignant(request, id):
     """Retourne l'EDT personnel d'un enseignant"""
     cours_ens = Cours.objects.filter(id_enseignant_id=id).values_list("num_cours", flat=True)
-    qs = EmploiDuTemps.objects.filter(num_cours__in=cours_ens).select_related("num_cours", "id_salle").order_by("jour", "num_cours__heure_debut")
-    return Response(EDTSerializer(qs, many=True).data)
+    edts = EmploiDuTemps.objects.filter(num_cours__in=cours_ens).select_related(
+        "num_cours", "num_cours__id_matiere", "num_cours__id_enseignant", "id_salle"
+    ).order_by("jour", "num_cours__heure_debut")
+
+    jours_ordre = {'Lundi': 1, 'Mardi': 2, 'Mercredi': 3, 'Jeudi': 4, 'Vendredi': 5}
+
+    result = []
+    for e in edts:
+        c = e.num_cours
+        result.append({
+            "id_edt": e.id_edt,
+            "jour": e.jour,
+            "date": str(e.date),
+            "statut": e.statut,
+            "heure_debut": str(c.heure_debut)[:5],
+            "heure_fin": str(c.heure_fin)[:5],
+            "type_cours": c.type_cours,
+            "matiere_nom": c.id_matiere.nom_matiere if c.id_matiere else "—",
+            "salle_nom": e.id_salle.nom_salle if e.id_salle else "—"
+        })
+
+    result.sort(key=lambda x: (jours_ordre.get(x["jour"], 6), x["heure_debut"]))
+    return Response(result)
 
 # ---------------------------
 # DÉPARTEMENTS & STATUTS
@@ -504,170 +526,6 @@ def rechercher_enseignant(request):
     
     return Response(result)
 
-# ---------------------------
-# GÉNÉRATION AUTOMATIQUE EDT
-# ---------------------------
-from datetime import time, date, timedelta
-
-@api_view(["POST"])
-@permission_classes([AllowAny])
-def generer_edt(request, id_formation):
-    try:
-        formation = Formation.objects.get(id_formation=id_formation)
-    except Formation.DoesNotExist:
-        return Response({"detail": "Formation introuvable"}, status=404)
-
-    matieres = list(Matiere.objects.filter(id_formation_id=id_formation))
-    if not matieres:
-        return Response({"detail": "Aucune matière dans cette formation"}, status=400)
-
-    creneaux = [
-        (time(8, 20), time(10, 20)),
-        (time(10, 50), time(12, 50)),
-        (time(14, 10), time(16, 10)),
-        (time(16, 25), time(18, 25)),
-        (time(18, 30), time(20, 30)),
-    ]
-    jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
-
-    salles_cm = list(Salle.objects.filter(type_salle='CM', est_disponible=True))
-    salles_td = list(Salle.objects.filter(type_salle='TD', est_disponible=True))
-    salles_tp = list(Salle.objects.filter(type_salle='TP', est_disponible=True))
-
-    # Occupations globales
-    occupe_enseignant = set()
-    occupe_salle = set()
-
-    # Charger les occupations existantes (autres formations)
-    for edt in EmploiDuTemps.objects.select_related('num_cours', 'id_salle').all():
-        if edt.num_cours and edt.num_cours.id_enseignant_id:
-            occupe_enseignant.add((edt.jour, str(edt.num_cours.heure_debut)))
-        if edt.id_salle:
-            occupe_salle.add((edt.jour, str(edt.num_cours.heure_debut), edt.id_salle.id_salle))
-
-    # Supprimer les anciens cours/EDT de cette formation
-    matieres_ids = [m.id_matiere for m in matieres]
-    anciens_cours = Cours.objects.filter(id_matiere__in=matieres_ids)
-    EmploiDuTemps.objects.filter(num_cours__in=anciens_cours).delete()
-    anciens_cours.delete()
-
-    # Date du prochain lundi
-    aujourd_hui = date.today()
-    jours_avant_lundi = (7 - aujourd_hui.weekday()) % 7
-    if jours_avant_lundi == 0:
-        jours_avant_lundi = 7
-    date_debut = aujourd_hui + timedelta(days=jours_avant_lundi)
-
-    cours_crees = 0
-    erreurs = []
-
-    for mat in matieres:
-        em = EnseignantMatiere.objects.filter(id_matiere=mat.id_matiere).first()
-        if not em:
-            erreurs.append(f"Pas d'enseignant pour {mat.nom_matiere}")
-            continue
-
-        id_ens = em.id_enseignant_id
-
-        # Charger les disponibilités de cet enseignant
-        dispos = list(Disponibilite.objects.filter(
-            id_enseignant_id=id_ens,
-            type_disponibilite__in=['Disponible', 'Prefere']
-        ))
-
-        # Construire la liste des créneaux disponibles pour cet enseignant
-        dispos_set = set()
-        for d in dispos:
-            for (h_deb, h_fin) in creneaux:
-                if d.jour and d.heure_debut <= h_deb and d.heure_fin >= h_fin:
-                    dispos_set.add((d.jour, h_deb, h_fin))
-
-        # Séances à placer
-        seances = []
-        for _ in range(mat.nb_cm):
-            seances.append('CM')
-        for _ in range(mat.nb_td):
-            seances.append('TD')
-        for _ in range(mat.nb_tp):
-            seances.append('TP')
-
-        for type_seance in seances:
-            place = False
-
-            # Choisir les salles selon le type
-            if type_seance == 'CM':
-                salles_candidates = salles_cm if salles_cm else salles_td
-            elif type_seance == 'TD':
-                salles_candidates = salles_td if salles_td else salles_cm
-            else:
-                salles_candidates = salles_tp if salles_tp else salles_td
-
-            for jour in jours:
-                if place:
-                    break
-                for (h_deb, h_fin) in creneaux:
-                    if place:
-                        break
-
-                    # L'enseignant est-il disponible ?
-                    if (jour, h_deb, h_fin) not in dispos_set:
-                        continue
-
-                    # L'enseignant est-il déjà occupé ?
-                    cle_ens = (jour, str(h_deb), id_ens)
-                    if cle_ens in occupe_enseignant:
-                        continue
-
-                    # Trouver une salle libre
-                    salle_trouvee = None
-                    for s in salles_candidates:
-                        cle_salle = (jour, str(h_deb), s.id_salle)
-                        if cle_salle not in occupe_salle:
-                            salle_trouvee = s
-                            break
-
-                    if not salle_trouvee:
-                        continue
-
-                    # Créer le cours
-                    try:
-                        cours = Cours.objects.create(
-                            type_cours=type_seance,
-                            heure_debut=h_deb,
-                            heure_fin=h_fin,
-                            id_matiere=mat,
-                            id_enseignant_id=id_ens
-                        )
-
-                        jour_index = jours.index(jour)
-                        date_cours = date_debut + timedelta(days=jour_index)
-
-                        EmploiDuTemps.objects.create(
-                            num_cours=cours,
-                            id_salle=salle_trouvee,
-                            jour=jour,
-                            date=date_cours,
-                            statut='Planifie'
-                        )
-
-                        occupe_enseignant.add(cle_ens)
-                        occupe_salle.add((jour, str(h_deb), salle_trouvee.id_salle))
-                        cours_crees += 1
-                        place = True
-                    except Exception as e:
-                        erreurs.append(f"Erreur création {mat.nom_matiere} - {type_seance}: {str(e)}")
-
-            if not place:
-                erreurs.append(f"Impossible de placer {mat.nom_matiere} - {type_seance}")
-
-    return Response({
-        "detail": f"EDT généré : {cours_crees} cours créés",
-        "cours_crees": cours_crees,
-        "erreurs": erreurs,
-        "formation": formation.nom_formation
-    }, status=201)
-    
-
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def edt_formation(request, id_formation):
@@ -707,3 +565,196 @@ def edt_formation(request, id_formation):
         "formation": FormationSerializer(formation).data,
         "cours": result
     })
+
+# ---------------------------
+# GÉNÉRATION AUTOMATIQUE EDT
+# ---------------------------
+
+# Mapping département → bâtiment
+DEPT_BATIMENT = {
+    'Informatique': 'Bâtiment Turing',
+    'Mathématiques': 'Bâtiment Turing',
+    'Physique': 'Bâtiment Tesla',
+    'Électronique': 'Bâtiment Tesla',
+    'Chimie': 'Bâtiment Curie',
+    'Biologie': 'Bâtiment Curie',
+    'Histoire': 'Bâtiment Senghor',
+    'Lettres': 'Bâtiment Senghor',
+    'Géographie': 'Bâtiment Senghor',
+}
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def generer_edt(request, id_formation):
+    try:
+        formation = Formation.objects.get(id_formation=id_formation)
+    except Formation.DoesNotExist:
+        return Response({"detail": "Formation introuvable"}, status=404)
+
+    matieres = list(Matiere.objects.filter(id_formation_id=id_formation))
+    if not matieres:
+        return Response({"detail": "Aucune matière dans cette formation"}, status=400)
+
+    creneaux = [
+        (time(8, 20), time(10, 20)),
+        (time(10, 50), time(12, 50)),
+        (time(14, 10), time(16, 10)),
+        (time(16, 25), time(18, 25)),
+        (time(18, 30), time(20, 30)),
+    ]
+    jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
+
+    # Bâtiment de la formation
+    batiment = DEPT_BATIMENT.get(formation.departement, '')
+
+    # Salles du bâtiment (priorité) + autres bâtiments en fallback
+    salles_cm = list(Salle.objects.filter(type_salle='CM', est_disponible=True, localisation=batiment)) or \
+                list(Salle.objects.filter(type_salle='CM', est_disponible=True))
+    salles_td = list(Salle.objects.filter(type_salle='TD', est_disponible=True, localisation=batiment)) or \
+                list(Salle.objects.filter(type_salle='TD', est_disponible=True))
+    salles_tp = list(Salle.objects.filter(type_salle='TP', est_disponible=True, localisation=batiment)) or \
+                list(Salle.objects.filter(type_salle='TP', est_disponible=True))
+
+    # Labos : chercher le labo spécifique au département et niveau
+    niveau = formation.niveau  # L1, L2, L3
+    dept = formation.departement
+    labo_nom = f"Labo {dept} {niveau}"
+    salles_labo = list(Salle.objects.filter(type_salle='Labo', nom_salle=labo_nom, est_disponible=True))
+    # Fallback : tous les labos du bâtiment
+    if not salles_labo:
+        salles_labo = list(Salle.objects.filter(type_salle='Labo', est_disponible=True, localisation=batiment))
+
+    # Occupations globales
+    occupe_enseignant = set()
+    occupe_salle = set()
+
+    # Charger les occupations existantes (autres formations)
+    for edt in EmploiDuTemps.objects.select_related('num_cours', 'id_salle').all():
+        if edt.num_cours and edt.num_cours.id_enseignant_id:
+            occupe_enseignant.add((edt.jour, str(edt.num_cours.heure_debut), edt.num_cours.id_enseignant_id))
+        if edt.id_salle:
+            occupe_salle.add((edt.jour, str(edt.num_cours.heure_debut), edt.id_salle.id_salle))
+
+    # Supprimer les anciens cours/EDT de cette formation
+    matieres_ids = [m.id_matiere for m in matieres]
+    anciens_cours = Cours.objects.filter(id_matiere__in=matieres_ids)
+    EmploiDuTemps.objects.filter(num_cours__in=anciens_cours).delete()
+    anciens_cours.delete()
+
+    # Date du prochain lundi
+    aujourd_hui = date.today()
+    jours_avant_lundi = (7 - aujourd_hui.weekday()) % 7
+    if jours_avant_lundi == 0:
+        jours_avant_lundi = 7
+    date_debut = aujourd_hui + timedelta(days=jours_avant_lundi)
+
+    cours_crees = 0
+    erreurs = []
+
+    for mat in matieres:
+        em = EnseignantMatiere.objects.filter(id_matiere=mat.id_matiere).first()
+        if not em:
+            erreurs.append(f"Pas d'enseignant pour {mat.nom_matiere}")
+            continue
+
+        id_ens = em.id_enseignant_id
+
+        # Disponibilités de l'enseignant
+        dispos = list(Disponibilite.objects.filter(
+            id_enseignant_id=id_ens,
+            type_disponibilite__in=['Disponible', 'Prefere']
+        ))
+
+        dispos_set = set()
+        for d in dispos:
+            for (h_deb, h_fin) in creneaux:
+                if d.jour and d.heure_debut <= h_deb and d.heure_fin >= h_fin:
+                    dispos_set.add((d.jour, h_deb, h_fin))
+
+        # Séances à placer
+        seances = []
+        for _ in range(mat.nb_cm):
+            seances.append('CM')
+        for _ in range(mat.nb_td):
+            seances.append('TD')
+        for _ in range(mat.nb_tp):
+            seances.append('TP')
+        for _ in range(mat.nb_labo):
+            seances.append('Labo')
+
+        for type_seance in seances:
+            place = False
+
+            if type_seance == 'CM':
+                salles_candidates = salles_cm
+            elif type_seance == 'TD':
+                salles_candidates = salles_td
+            elif type_seance == 'Labo':
+                salles_candidates = salles_labo
+            else:
+                salles_candidates = salles_tp
+
+            if not salles_candidates:
+                erreurs.append(f"Aucune salle {type_seance} disponible pour {mat.nom_matiere}")
+                continue
+
+            for jour in jours:
+                if place:
+                    break
+                for (h_deb, h_fin) in creneaux:
+                    if place:
+                        break
+
+                    if (jour, h_deb, h_fin) not in dispos_set:
+                        continue
+
+                    cle_ens = (jour, str(h_deb), id_ens)
+                    if cle_ens in occupe_enseignant:
+                        continue
+
+                    salle_trouvee = None
+                    for s in salles_candidates:
+                        cle_salle = (jour, str(h_deb), s.id_salle)
+                        if cle_salle not in occupe_salle:
+                            salle_trouvee = s
+                            break
+
+                    if not salle_trouvee:
+                        continue
+
+                    try:
+                        cours = Cours.objects.create(
+                            type_cours=type_seance,
+                            heure_debut=h_deb,
+                            heure_fin=h_fin,
+                            id_matiere=mat,
+                            id_enseignant_id=id_ens
+                        )
+
+                        jour_index = jours.index(jour)
+                        date_cours = date_debut + timedelta(days=jour_index)
+
+                        EmploiDuTemps.objects.create(
+                            num_cours=cours,
+                            id_salle=salle_trouvee,
+                            jour=jour,
+                            date=date_cours,
+                            statut='Planifie'
+                        )
+
+                        occupe_enseignant.add(cle_ens)
+                        occupe_salle.add((jour, str(h_deb), salle_trouvee.id_salle))
+                        cours_crees += 1
+                        place = True
+                    except Exception as e:
+                        erreurs.append(f"Erreur création {mat.nom_matiere} - {type_seance}: {str(e)}")
+
+            if not place and salles_candidates:
+                erreurs.append(f"Impossible de placer {mat.nom_matiere} - {type_seance}")
+
+    return Response({
+        "detail": f"EDT généré : {cours_crees} cours créés",
+        "cours_crees": cours_crees,
+        "erreurs": erreurs,
+        "formation": formation.nom_formation
+    }, status=201)

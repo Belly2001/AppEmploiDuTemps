@@ -115,6 +115,7 @@ class Matiere(models.Model):
     nb_cm = models.IntegerField(default=1)
     nb_td = models.IntegerField(default=1)
     nb_tp = models.IntegerField(default=0)
+    nb_labo = models.IntegerField(default=0)
 
     class Meta:
         managed = False
@@ -155,6 +156,8 @@ class Formation(models.Model):
     niveau = models.CharField(max_length=10)
     departement = models.CharField(max_length=100)
     semestre_actuel = models.IntegerField(default=1)
+    effectif = models.IntegerField(default=70)
+    
 
     class Meta:
         managed = False

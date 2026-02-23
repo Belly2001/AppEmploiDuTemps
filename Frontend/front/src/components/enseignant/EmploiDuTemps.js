@@ -40,12 +40,13 @@ export default function EmploiDuTemps({ enseignant }) {
       case 'CM': return { backgroundColor: '#e3f2fd', color: '#1565c0', border: '1px solid #bbdefb' }
       case 'TD': return { backgroundColor: '#fff3e0', color: '#e65100', border: '1px solid #ffe0b2' }
       case 'TP': return { backgroundColor: '#e8f5e9', color: '#2e7d32', border: '1px solid #c8e6c9' }
+      case 'Labo': return { backgroundColor: '#f3e5f5', color: '#7b1fa2', border: '1px solid #ce93d8' }
       default: return { backgroundColor: '#f5f5f5', color: '#666' }
     }
   }
 
   const getCoursForSlot = (jour, creneau) => {
-    return cours.find(c => c.jour === jour && c.heure_debut === creneau.debut + ':00')
+    return cours.find(c => c.jour === jour && c.heure_debut === creneau.debut)
   }
 
   // Compter les cours par type
@@ -131,7 +132,7 @@ export default function EmploiDuTemps({ enseignant }) {
                             fontSize: '12px', minHeight: '60px'
                           }}>
                             <div style={{ fontWeight: '700', fontSize: '13px', marginBottom: '5px' }}>
-                              {c.cours_intitule || c.matiere_nom || 'Cours'}
+                              {c.matiere_nom || 'Cours'}
                             </div>
                             <span style={{
                               display: 'inline-block', padding: '2px 8px', borderRadius: '10px',

@@ -18,7 +18,7 @@ class MatiereSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Matiere
-        fields = ["id_matiere", "nom_matiere", "id_formation", "formation_nom", "nb_cm", "nb_td", "nb_tp"]
+        fields = ["id_matiere", "nom_matiere", "id_formation", "formation_nom", "nb_cm", "nb_td", "nb_tp", "nb_labo"]
 
 class CoursSerializer(serializers.ModelSerializer):
     nom_matiere = serializers.CharField(source="id_matiere.nom_matiere", read_only=True)
@@ -71,6 +71,6 @@ class DemandeSerializer(serializers.ModelSerializer):
 class FormationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Formation
-        fields = ["id_formation", "nom_formation", "niveau", "departement", "semestre_actuel"]
+        fields = ["id_formation", "nom_formation", "departement", "niveau", "semestre_actuel", "effectif"]
         
         

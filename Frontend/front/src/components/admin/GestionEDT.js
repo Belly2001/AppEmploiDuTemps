@@ -79,6 +79,7 @@ export default function GestionEDT() {
       case 'CM': return { backgroundColor: '#e3f2fd', color: '#1565c0', border: '1px solid #bbdefb' }
       case 'TD': return { backgroundColor: '#fff3e0', color: '#e65100', border: '1px solid #ffe0b2' }
       case 'TP': return { backgroundColor: '#e8f5e9', color: '#2e7d32', border: '1px solid #c8e6c9' }
+      case 'Labo': return { backgroundColor: '#f3e5f5', color: '#7b1fa2', border: '1px solid #ce93d8' }
       default: return { backgroundColor: '#f5f5f5', color: '#666' }
     }
   }
