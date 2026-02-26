@@ -80,11 +80,14 @@ WSGI_APPLICATION = 'scheduleProj.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'gestionEnseignants',          # le nom de la base que tu viens de restaurer
-        'USER': 'postgres',      # ton utilisateur PostgreSQL local
-        'PASSWORD': 'Ndanga75',
-        'HOST': 'localhost',
+        'NAME': 'postgres',
+        'USER': 'postgres.szqwmczksoahkjqsvrab',
+        'PASSWORD': 'uDKEgJHtv4JeMmZc',
+        'HOST': 'aws-1-eu-west-1.pooler.supabase.com',
         'PORT': '5432',
+        'OPTIONS': {
+            'options': '-c search_path=public',
+        },
     }
 }
 
