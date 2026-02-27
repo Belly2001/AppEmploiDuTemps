@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8000/schedule'
+const API_URL = "https://appemploidutemps.onrender.com/schedule"
 
 // ========== ENSEIGNANTS ==========
 
