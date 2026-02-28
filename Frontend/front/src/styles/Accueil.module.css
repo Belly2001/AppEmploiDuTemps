@@ -1,8 +1,9 @@
-/* ========== LANDING PAGE SIMPLE ========== */
+
 .landingPage {
   background-image: url("/photoEmp.jpg");
   background-size: cover;
   background-position: center;
+  background-attachment: fixed;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -11,7 +12,7 @@
   margin: 0;
 }
 
-/* Overlay sombre pour meilleure lisibilité */
+/* Overlay sombre avec gradient */
 .landingPage::before {
   content: '';
   position: absolute;
@@ -19,180 +20,444 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: linear-gradient(
+    180deg,
+    rgba(6, 6, 14, 0.85) 0%,
+    rgba(6, 6, 14, 0.7) 40%,
+    rgba(6, 6, 14, 0.8) 100%
+  );
   z-index: 0;
 }
 
 .landingPage > * {
   position: relative;
+  z-index: 2;
+}
+
+/* Grain texture overlay */
+.grain {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
   z-index: 1;
 }
 
-/* ========== NAVIGATION AVEC ANIMATION ========== */
+/* ===== NAVIGATION GLASSMORPHISM ===== */
 .nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 18px 40px;
   display: flex;
-  gap: 15px;
-  padding: 30px;
-  justify-content: flex-start;
-  animation: fadeIn 0.5s ease-out;
+  justify-content: space-between;
+  align-items: center;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(6, 6, 14, 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  animation: fadeIn 0.6s ease-out;
 }
 
-.navButton {
-  padding: 12px 24px;
-  background-color: transparent;
+.navLogo {
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
   color: white;
-  border: 2px solid white;
-  border-radius: 8px;
+  letter-spacing: -0.5px;
+}
+
+.logoAccent {
+  background: linear-gradient(135deg, #818cf8, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.navLinks {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.navLink {
+  padding: 10px 20px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  border: none;
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
   transition: all 0.3s ease;
 }
 
-.navButton:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-3px);
+.navLink:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.06);
 }
 
-/* ========== SECTION HERO (CENTRÉ) ========== */
-.heroSection {
-  flex: 1;
+.navLinkInscription {
+  padding: 10px 20px;
+  color: white;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.navLinkInscription:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.navLinkConnexion {
+  padding: 10px 22px;
+  color: #06060e;
+  background: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.navLinkConnexion:hover {
+  background: #e8e8e8;
+  transform: translateY(-1px);
+}
+
+/* ===== HERO SECTION ===== */
+.hero {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
-  gap: 30px;
-  padding: 40px 20px;
+  padding: 140px 20px 80px;
 }
 
-/* ========== TITRE PRINCIPAL AVEC ANIMATION ========== */
-.mainTitle {
-  font-size: 100px;
-  font-family: 'Lucida Handwriting', cursive;
-  font-weight: bold;
+/* Badge */
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 40px;
+  cursor: default;
+  transition: all 0.3s ease;
+  animation: fadeInDown 0.6s ease-out 0.2s both;
+}
+
+.heroBadge:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.badgeDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4ade80;
+  animation: pulse 2s infinite;
+}
+
+/* Titre */
+.heroTitle {
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+  font-size: clamp(42px, 7vw, 80px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -2.5px;
   color: white;
-  margin: 0;
-  text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.8);
-  line-height: 1.2;
-  animation: fadeInDown 0.5s ease-out;
+  max-width: 900px;
+  margin: 0 0 28px 0;
+  animation: fadeInUp 0.7s ease-out 0.3s both;
 }
 
-/* ========== SOUS-TITRE AVEC ANIMATION ========== */
-.subtitle {
-  font-size: 28px;
+.gradientText {
+  background: linear-gradient(135deg, #818cf8 0%, #06b6d4 50%, #4ade80 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Sous-titre */
+.heroSubtitle {
+  font-size: clamp(16px, 2vw, 20px);
   font-weight: 400;
-  color: white;
-  margin: 0;
-  max-width: 800px;
-  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8);
-  line-height: 1.5;
-  animation: fadeInUp 0.5s ease-out 0.2s both;
+  color: rgba(255, 255, 255, 0.5);
+  max-width: 580px;
+  line-height: 1.7;
+  margin: 0 0 50px 0;
+  animation: fadeInUp 0.7s ease-out 0.5s both;
 }
 
-/* ========== GROS BOUTON CTA AVEC ANIMATION ========== */
-.ctaButton {
-  padding: 20px 60px;
-  font-size: 24px;
-  font-weight: bold;
-  background-color: white;
-  color: #191921;
+/* Boutons CTA */
+.heroCta {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  animation: fadeInUp 0.7s ease-out 0.7s both;
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 36px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+  color: #06060e;
+  background: white;
   border: none;
-  border-radius: 50px;
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-  margin-top: 20px;
-  animation: fadeInUp 0.5s ease-out 0.4s both;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
 }
 
-.ctaButton:hover {
-  background-color: #191921;
+.btnPrimary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 40px rgba(255, 255, 255, 0.2);
+}
+
+.arrow {
+  transition: transform 0.3s ease;
+  font-size: 13px;
+}
+
+.btnPrimary:hover .arrow {
+  transform: translateX(4px);
+}
+
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 36px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btnSecondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
   color: white;
-  transform: translateY(-5px) scale(1.05);
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
-  border: 2px solid white;
+  transform: translateY(-3px);
 }
 
-.ctaButton:active {
-  transform: translateY(-2px) scale(1.02);
+.playIcon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* ========== DÉFINITION DES ANIMATIONS ========== */
+/* ===== FEATURES STRIP ===== */
+.featuresStrip {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 80px;
+  animation: fadeIn 0.7s ease-out 1s both;
+  flex-wrap: wrap;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.featureItem:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.featureIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+}
+
+.featureItem:hover .featureIcon {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ===== ANIMATIONS ===== */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* ========== RESPONSIVE ========== */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .nav {
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 20px;
+    padding: 15px 20px;
   }
 
-  .navButton {
-    font-size: 14px;
-    padding: 10px 18px;
+  .navLogo {
+    font-size: 18px;
   }
 
-  .mainTitle {
-    font-size: 60px;
+  .navLinks {
+    gap: 4px;
   }
 
-  .subtitle {
-    font-size: 20px;
-    padding: 0 20px;
+  .navLink {
+    padding: 8px 14px;
+    font-size: 13px;
   }
 
-  .ctaButton {
-    padding: 16px 40px;
-    font-size: 20px;
+  .navLinkInscription {
+    display: none;
   }
 
-  .heroSection {
-    gap: 20px;
+  .navLinkConnexion {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  .hero {
+    padding: 120px 20px 60px;
+  }
+
+  .heroTitle {
+    letter-spacing: -1px;
+  }
+
+  .heroSubtitle {
+    margin-bottom: 35px;
+  }
+
+  .heroCta {
+    flex-direction: column;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .btnPrimary,
+  .btnSecondary {
+    width: 100%;
+    justify-content: center;
+    padding: 15px 30px;
+  }
+
+  .featuresStrip {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-top: 50px;
+  }
+
+  .heroBadge {
+    font-size: 12px;
+    margin-bottom: 30px;
   }
 }
 
 @media (max-width: 480px) {
-  .mainTitle {
-    font-size: 45px;
+  .nav {
+    padding: 12px 16px;
   }
 
-  .subtitle {
-    font-size: 18px;
+  .navLogo {
+    font-size: 16px;
   }
 
-  .ctaButton {
-    padding: 14px 35px;
-    font-size: 18px;
+  .navLink {
+    display: none;
+  }
+
+  .navLinkConnexion {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  .hero {
+    padding: 110px 16px 50px;
+  }
+
+  .heroTitle {
+    letter-spacing: -0.5px;
+  }
+
+  .heroSubtitle {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .btnPrimary,
+  .btnSecondary {
+    padding: 14px 24px;
+    font-size: 14px;
+    border-radius: 12px;
+  }
+
+  .featureItem {
+    font-size: 13px;
+  }
+
+  .featureIcon {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
   }
 }
