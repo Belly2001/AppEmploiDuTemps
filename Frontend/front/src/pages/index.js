@@ -44,7 +44,7 @@ export default function Home() {
     {
       icon: <FaCalendarAlt size={22} />,
       titre: 'Gain de temps',
-      desc: 'Fini les heures passées à jongler avec Excel. Un emploi du temps complet en quelques minutes.',
+      desc: '<Quelques clics et notre algorithme fait le reste. Un emploi du temps complet en quelques minutes.',
     },
     {
       icon: <FaShieldAlt size={22} />,
@@ -58,18 +58,18 @@ export default function Home() {
     },
     {
       icon: <FaBuilding size={22} />,
-      titre: 'Gestion complète des salles',
-      desc: '4 bâtiments, 122 salles dont 10 labos spécialisés, le tout géré intelligemment.',
+      titre: 'Gestion des salles',
+      desc: 'On vous trouve amphi, salles , Laboratoire , etc... le tout est gérer de ne vous en faites pas .',
     },
     {
       icon: <FaChalkboardTeacher size={22} />,
       titre: 'Espace enseignant dédié',
-      desc: 'Chaque enseignant peut consulter son EDT, gérer ses dispos et faire des demandes.',
+      desc: 'Vous pouver consulter votre EDT, gérer vos disponibilités et faire des demandes auprès de l\'administration .',
     },
     {
       icon: <FaFilePdf size={22} />,
       titre: 'Export PDF',
-      desc: 'Exportez les emplois du temps par formation, par enseignant ou par salle au format PDF.',
+      desc: 'Exportez les emplois du temps des formations dans lesquels vous enseignez,au format PDF.',
     },
   ]
 
@@ -108,8 +108,8 @@ export default function Home() {
         </h1>
 
         <p className={styles.heroSubtitle}>
-          Automatisez la création de vos emplois du temps, gérez les disponibilités 
-          des enseignants et optimisez l&apos;utilisation des salles en quelques clics.
+          Automatisez la création de vos emplois du temps et gérer vos disponibilités en quelques clics.
+           
         </p>
 
         <div className={styles.heroCta}>
@@ -142,7 +142,7 @@ export default function Home() {
           </div>
           <div className={styles.featureItem}>
             <div className={styles.featureIcon}><FaBuilding /></div>
-            4 bâtiments, 122 salles
+            Gestion des salles
           </div>
           <div className={styles.featureItem}>
             <div className={styles.featureIcon}><FaFilePdf /></div>
@@ -156,16 +156,6 @@ export default function Home() {
         
         {/* petit label au dessus du titre, comme un tag */}
         <div className={styles.sectionLabel}>Comment ça marche</div>
-
-        <h2 className={styles.sectionTitle}>
-          De la saisie à l&apos;emploi du temps,<br />
-          <span className={styles.gradientText}>en 4 étapes simples</span>
-        </h2>
-
-        <p className={styles.sectionSubtitle}>
-          Notre plateforme simplifie tout le processus de création 
-          des emplois du temps universitaires.
-        </p>
 
         {/* les 4 cartes étapes */}
         <div className={styles.stepsGrid}>
@@ -203,31 +193,6 @@ export default function Home() {
               <p className={styles.avantageDesc}>{item.desc}</p>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ============ CTA FINAL ============ */}
-      <section className={styles.sectionCta}>
-        <div className={styles.ctaBox}>
-          <h2 className={styles.ctaTitle}>
-            Prêt à simplifier vos emplois du temps ?
-          </h2>
-          <p className={styles.ctaDesc}>
-            Rejoignez les établissements qui ont déjà automatisé leur gestion.
-          </p>
-          <div className={styles.ctaButtons}>
-            <Link href="/connexion">
-              <button className={styles.btnPrimary}>
-                Commencer gratuitement
-                <FaArrowRight className={styles.arrow} />
-              </button>
-            </Link>
-            <Link href="/inscription">
-              <button className={styles.btnSecondary}>
-                Créer un compte
-              </button>
-            </Link>
-          </div>
         </div>
       </section>
 
