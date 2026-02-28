@@ -1,3 +1,10 @@
+/* ============================================
+   LANDING PAGE - SCHEDULE APP
+   style moderne, fond sombre + photo
+   ============================================ */
+
+
+/* ===== BASE & BACKGROUND ===== */
 
 .landingPage {
   background-image: url("/photoEmp.jpg");
@@ -12,7 +19,7 @@
   margin: 0;
 }
 
-/* Overlay sombre avec gradient */
+/* overlay sombre avec gradient pour lisibilité */
 .landingPage::before {
   content: '';
   position: absolute;
@@ -34,7 +41,7 @@
   z-index: 2;
 }
 
-/* Grain texture overlay */
+/* petit grain subtil sur toute la page */
 .grain {
   position: fixed;
   top: 0;
@@ -46,7 +53,9 @@
   z-index: 1;
 }
 
-/* ===== NAVIGATION GLASSMORPHISM ===== */
+
+/* ===== NAVIGATION (glassmorphism) ===== */
+
 .nav {
   position: fixed;
   top: 0;
@@ -84,6 +93,7 @@
   align-items: center;
 }
 
+/* lien classique dans la nav */
 .navLink {
   padding: 10px 20px;
   background: transparent;
@@ -95,6 +105,7 @@
   font-weight: 500;
   font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
   transition: all 0.3s ease;
+  text-decoration: none;
 }
 
 .navLink:hover {
@@ -102,6 +113,7 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
+/* bouton "s'inscrire" - style outline */
 .navLinkInscription {
   padding: 10px 20px;
   color: white;
@@ -120,6 +132,7 @@
   border-color: rgba(255, 255, 255, 0.25);
 }
 
+/* bouton "se connecter" - style plein blanc */
 .navLinkConnexion {
   padding: 10px 22px;
   color: #06060e;
@@ -138,7 +151,9 @@
   transform: translateY(-1px);
 }
 
+
 /* ===== HERO SECTION ===== */
+
 .hero {
   min-height: 100vh;
   display: flex;
@@ -149,7 +164,7 @@
   padding: 140px 20px 80px;
 }
 
-/* Badge */
+/* badge vert en haut du hero */
 .heroBadge {
   display: inline-flex;
   align-items: center;
@@ -180,7 +195,7 @@
   animation: pulse 2s infinite;
 }
 
-/* Titre */
+/* gros titre du hero */
 .heroTitle {
   font-family: 'Sora', 'Segoe UI', sans-serif;
   font-size: clamp(42px, 7vw, 80px);
@@ -193,13 +208,13 @@
   animation: fadeInUp 0.7s ease-out 0.3s both;
 }
 
+/* texte en dégradé pour le mot clé */
 .gradientText {
   background: linear-gradient(135deg, #818cf8 0%, #06b6d4 50%, #4ade80 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-/* Sous-titre */
 .heroSubtitle {
   font-size: clamp(16px, 2vw, 20px);
   font-weight: 400;
@@ -210,7 +225,7 @@
   animation: fadeInUp 0.7s ease-out 0.5s both;
 }
 
-/* Boutons CTA */
+/* conteneur des 2 boutons CTA */
 .heroCta {
   display: flex;
   gap: 16px;
@@ -218,6 +233,7 @@
   animation: fadeInUp 0.7s ease-out 0.7s both;
 }
 
+/* bouton principal blanc */
 .btnPrimary {
   display: inline-flex;
   align-items: center;
@@ -249,6 +265,7 @@
   transform: translateX(4px);
 }
 
+/* bouton secondaire transparent */
 .btnSecondary {
   display: inline-flex;
   align-items: center;
@@ -282,7 +299,9 @@
   justify-content: center;
 }
 
-/* ===== FEATURES STRIP ===== */
+
+/* ===== FEATURES STRIP (barre en bas du hero) ===== */
+
 .featuresStrip {
   display: flex;
   justify-content: center;
@@ -326,7 +345,256 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
+
+/* ===== SECTIONS COMMUNES (titres, labels...) ===== */
+
+/* petit label coloré au-dessus des titres de section */
+.sectionLabel {
+  display: inline-block;
+  padding: 6px 16px;
+  background: rgba(129, 140, 248, 0.1);
+  border: 1px solid rgba(129, 140, 248, 0.2);
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #818cf8;
+  margin-bottom: 20px;
+  letter-spacing: 0.5px;
+}
+
+/* titre principal des sections */
+.sectionTitle {
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -1.5px;
+  color: white;
+  margin: 0 0 20px 0;
+}
+
+/* sous-titre descriptif */
+.sectionSubtitle {
+  font-size: clamp(15px, 1.5vw, 18px);
+  color: rgba(255, 255, 255, 0.45);
+  max-width: 520px;
+  line-height: 1.7;
+  margin: 0 auto 60px auto;
+}
+
+
+/* ===== SECTION "COMMENT CA MARCHE" ===== */
+
+.sectionDemo {
+  padding: 100px 40px;
+  text-align: center;
+  /* fond un peu plus sombre pour marquer la séparation */
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* grille des 4 étapes */
+.stepsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* chaque carte étape */
+.stepCard {
+  position: relative;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 35px 25px 30px;
+  text-align: left;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.stepCard:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-4px);
+}
+
+/* numéro en haut à droite, discret */
+.stepNumero {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  font-family: 'Sora', sans-serif;
+  font-size: 48px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.04);
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* icone dans un carré arrondi */
+.stepIconBox {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.15), rgba(6, 182, 212, 0.15));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #818cf8;
+  margin-bottom: 20px;
+}
+
+.stepTitre {
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 10px 0;
+}
+
+.stepDesc {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1.6;
+  margin: 0;
+}
+
+
+/* ===== SECTION "POURQUOI NOUS CHOISIR" ===== */
+
+.sectionAvantages {
+  padding: 100px 40px;
+  text-align: center;
+}
+
+/* grille 3 colonnes pour les avantages */
+.avantagesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.avantageCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 30px 25px;
+  text-align: left;
+  transition: all 0.3s ease;
+}
+
+.avantageCard:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-3px);
+}
+
+/* icone ronde avec un fond subtil */
+.avantageIcon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: rgba(129, 140, 248, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #818cf8;
+  margin-bottom: 18px;
+}
+
+.avantageTitre {
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 8px 0;
+}
+
+.avantageDesc {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.6;
+  margin: 0;
+}
+
+
+/* ===== SECTION CTA FINAL ===== */
+
+.sectionCta {
+  padding: 80px 40px 100px;
+  display: flex;
+  justify-content: center;
+}
+
+/* la boîte CTA avec un fond glassmorphism */
+.ctaBox {
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.1), rgba(6, 182, 212, 0.08));
+  border: 1px solid rgba(129, 140, 248, 0.2);
+  border-radius: 24px;
+  padding: 60px 50px;
+  text-align: center;
+  max-width: 700px;
+  width: 100%;
+}
+
+.ctaTitle {
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+  font-size: clamp(24px, 3vw, 36px);
+  font-weight: 800;
+  color: white;
+  margin: 0 0 15px 0;
+  letter-spacing: -1px;
+}
+
+.ctaDesc {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 35px 0;
+  line-height: 1.6;
+}
+
+.ctaButtons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+
+/* ===== FOOTER ===== */
+
+.footer {
+  padding: 40px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.footerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.footerLogo {
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+}
+
+.footerText {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.3);
+  margin: 0;
+}
+
+
 /* ===== ANIMATIONS ===== */
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -347,7 +615,21 @@
   50% { opacity: 0.4; }
 }
 
+
 /* ===== RESPONSIVE ===== */
+
+/* tablettes */
+@media (max-width: 1024px) {
+  .stepsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .avantagesGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* petites tablettes / gros téléphones */
 @media (max-width: 768px) {
   .nav {
     padding: 15px 20px;
@@ -366,6 +648,7 @@
     font-size: 13px;
   }
 
+  /* on cache le bouton inscription sur mobile, trop de boutons */
   .navLinkInscription {
     display: none;
   }
@@ -387,6 +670,7 @@
     margin-bottom: 35px;
   }
 
+  /* boutons CTA empilés sur mobile */
   .heroCta {
     flex-direction: column;
     width: 100%;
@@ -411,8 +695,50 @@
     font-size: 12px;
     margin-bottom: 30px;
   }
+
+  /* sections en dessous */
+  .sectionDemo,
+  .sectionAvantages {
+    padding: 70px 20px;
+  }
+
+  .stepsGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .avantagesGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .sectionCta {
+    padding: 60px 20px 80px;
+  }
+
+  .ctaBox {
+    padding: 40px 25px;
+  }
+
+  .ctaButtons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .ctaButtons .btnPrimary,
+  .ctaButtons .btnSecondary {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .footerContent {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
 }
 
+/* téléphones */
 @media (max-width: 480px) {
   .nav {
     padding: 12px 16px;
@@ -422,6 +748,7 @@
     font-size: 16px;
   }
 
+  /* on cache aussi "à propos" sur tout petit écran */
   .navLink {
     display: none;
   }
@@ -459,5 +786,23 @@
     width: 32px;
     height: 32px;
     font-size: 14px;
+  }
+
+  .sectionDemo,
+  .sectionAvantages {
+    padding: 50px 16px;
+  }
+
+  .sectionSubtitle {
+    margin-bottom: 40px;
+  }
+
+  .stepCard,
+  .avantageCard {
+    padding: 25px 20px;
+  }
+
+  .footer {
+    padding: 30px 16px;
   }
 }
