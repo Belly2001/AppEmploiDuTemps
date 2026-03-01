@@ -11,6 +11,7 @@ import GestionDemandes from '@/components/admin/GestionDemandes'
 import EnvoyerNotification from '@/components/admin/EnvoyerNotification'
 import ProfilAdmin from '@/components/admin/ProfilAdmin'
 import GestionDepartements from '@/components/admin/GestionDepartements'
+import GestionInscriptions from '@/components/admin/Gestioninscriptions'
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -72,6 +73,8 @@ export default function AdminDashboard() {
         return <GestionDemandes />
       case 'notifications':
         return <EnvoyerNotification />
+      case 'inscriptions':
+        return <GestionInscriptions />
       case 'profil':
         return <ProfilAdmin admin={admin} setAdmin={setAdmin} />
       default:

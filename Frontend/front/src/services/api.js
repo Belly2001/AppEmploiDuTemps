@@ -318,3 +318,45 @@ export async function getEDTPersonnel(idEnseignant) {
   if (!res.ok) throw new Error("Erreur chargement EDT")
   return await res.json()
 }
+
+
+// DEMANDES D'INSCRIPTION 
+
+// soumettre une demande (candidat)
+export async function apiSoumettreDemandeInscription(data) {
+  const res = await fetch(`${API_URL}/inscription/demande/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => null)
+    throw new Error(err?.detail || "Erreur lors de l'envoi de la demande")
+  }
+  return await res.json()
+}
+
+// verifier où en est la demande (candidat)
+export async function apiVerifierStatutDemande(email) {
+  const res = await fetch(`${API_URL}/inscription/statut/?email=${encodeURIComponent(email)}`)
+  if (!res.ok) throw new Error('Aucune demande trouvée')
+  return await res.json()
+}
+
+// lister toutes les demandes (admin)
+export async function apiGetDemandesInscription() {
+  const res = await fetch(`${API_URL}/admin/inscriptions/`)
+  if (!res.ok) throw new Error('Erreur chargement des demandes')
+  return await res.json()
+}
+
+// accepter ou rejeter une demande (admin)
+export async function apiRepondreDemandeInscription(idDemande, data) {
+  const res = await fetch(`${API_URL}/admin/inscriptions/${idDemande}/repondre/`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  if (!res.ok) throw new Error('Erreur lors de la réponse')
+  return await res.json()
+}

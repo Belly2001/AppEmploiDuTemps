@@ -86,7 +86,7 @@ export default function Home() {
         <div className={styles.navLinks}>
           {/* scroll vers la section demo quand on clique */}
           <a href="#comment-ca-marche" className={styles.navLink}>À propos</a>
-          <Link href="/inscription">
+          <Link href="/demande-inscription">
             <button className={styles.navLinkInscription}>S&apos;inscrire</button>
           </Link>
           <Link href="/connexion">

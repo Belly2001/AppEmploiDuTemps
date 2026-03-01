@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import styles from '@/styles/Connexion.module.css'
@@ -6,6 +6,9 @@ import { apiAjouterEnseignant } from '@/services/api'
 
 export default function Inscription() {
   const router = useRouter()
+
+  // on récupère les infos pré-remplies si le candidat vient de la demande acceptée
+  const { nom, prenom, email, departement, grade } = router.query
 
   const [formData, setFormData] = useState({
     nom: '',
@@ -20,30 +23,35 @@ export default function Inscription() {
   const [erreur, setErreur] = useState('')
   const [chargement, setChargement] = useState(false)
 
+  // si on arrive avec des query params, on pré-remplit le formulaire
+  useEffect(() => {
+    if (nom || prenom || email) {
+      setFormData(prev => ({
+        ...prev,
+        nom: nom || '',
+        prenom: prenom || '',
+        email: email || '',
+        departement: departement || '',
+        grade: grade || ''
+      }))
+    }
+  }, [nom, prenom, email, departement, grade])
+
+  // champs venant de la demande = pas modifiables
+  const champPreRempli = !!(nom || prenom || email)
+
   const departements = [
-    'Informatique',
-    'Mathématiques',
-    'Physique',
-    'Chimie',
-    'Biologie',
-    'Lettres',
-    'Histoire',
-    'Géographie'
+    'Informatique', 'Mathématiques', 'Physique', 'Chimie',
+    'Biologie', 'Lettres', 'Histoire', 'Géographie'
   ]
 
   const grades = [
-    'Assistant',
-    'Maître de conférences',
-    'Professeur',
-    'Vacataire'
+    'Assistant', 'Maître de conférences', 'Professeur', 'Vacataire'
   ]
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    setFormData(prev => ({ ...prev, [name]: value }))
     setErreur('')
   }
 
@@ -71,12 +79,11 @@ export default function Inscription() {
     setChargement(true)
 
     try {
-      // On utilise la route d'ajout d'enseignant du backend
-      // Les noms des champs correspondent au serializer Django
       await apiAjouterEnseignant({
         nom: formData.nom,
         prenom: formData.prenom,
         email: formData.email,
+        mot_de_passe: formData.motDePasse,
         grade: formData.grade,
         departement: formData.departement,
         statut: 'Actif'
@@ -108,7 +115,9 @@ export default function Inscription() {
             <h1 className={styles.brandTitle}>Schedule APP</h1>
             <div className={styles.divider}></div>
             <p className={styles.brandSlogan}>
-              Rejoignez-nous et simplifiez votre gestion du temps
+              {champPreRempli
+                ? 'Votre demande a été acceptée ! Finalisez votre inscription en créant votre mot de passe.'
+                : 'Rejoignez-nous et simplifiez votre gestion du temps'}
             </p>
           </div>
 
@@ -138,21 +147,43 @@ export default function Inscription() {
               <div>
                 <h3 className={styles.featureTitle}>Accès immédiat</h3>
                 <p className={styles.featureText}>
-                  Commencez à utiliser l'application dès maintenant
+                  Commencez à utiliser l&apos;application dès maintenant
                 </p>
               </div>
             </div>
           </div>
 
           <p className={styles.quote}>
-            "Votre temps est précieux, nous vous aidons à le gérer"
+            &quot;Votre temps est précieux, nous vous aidons à le gérer&quot;
           </p>
         </div>
 
         <div className={styles.rightSection}>
           <div className={styles.formBox}>
-            <h1 className={styles.title}>Créer un compte</h1>
-            <p className={styles.subtitle}>Remplissez vos informations</p>
+            <h1 className={styles.title}>
+              {champPreRempli ? 'Finaliser l\'inscription' : 'Créer un compte'}
+            </h1>
+            <p className={styles.subtitle}>
+              {champPreRempli 
+                ? 'Vos infos sont pré-remplies, il ne reste qu\'à choisir un mot de passe'
+                : 'Remplissez vos informations'}
+            </p>
+
+            {/* petit bandeau vert si la demande a été acceptée */}
+            {champPreRempli && (
+              <div style={{
+                backgroundColor: 'rgba(74, 222, 128, 0.1)',
+                border: '1px solid rgba(74, 222, 128, 0.2)',
+                color: '#4ade80',
+                padding: '12px',
+                borderRadius: '10px',
+                marginBottom: '20px',
+                textAlign: 'center',
+                fontSize: '14px'
+              }}>
+                ✅ Demande acceptée — Créez votre mot de passe pour terminer
+              </div>
+            )}
 
             {erreur && (
               <div style={{
@@ -174,24 +205,26 @@ export default function Inscription() {
                 <div className={styles.inputGroup} style={{ flex: 1 }}>
                   <label className={styles.label}>Nom</label>
                   <input
-                    type="text"
-                    name="nom"
+                    type="text" name="nom"
                     value={formData.nom}
                     onChange={handleChange}
                     className={styles.input}
                     placeholder="Votre nom"
+                    readOnly={champPreRempli}
+                    style={champPreRempli ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                   />
                 </div>
 
                 <div className={styles.inputGroup} style={{ flex: 1 }}>
                   <label className={styles.label}>Prénom</label>
                   <input
-                    type="text"
-                    name="prenom"
+                    type="text" name="prenom"
                     value={formData.prenom}
                     onChange={handleChange}
                     className={styles.input}
                     placeholder="Votre prénom"
+                    readOnly={champPreRempli}
+                    style={champPreRempli ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                   />
                 </div>
               </div>
@@ -199,20 +232,20 @@ export default function Inscription() {
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Email</label>
                 <input
-                  type="email"
-                  name="email"
+                  type="email" name="email"
                   value={formData.email}
                   onChange={handleChange}
                   className={styles.input}
                   placeholder="votre.email@universite.fr"
+                  readOnly={champPreRempli}
+                  style={champPreRempli ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                 />
               </div>
 
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Mot de passe</label>
                 <input
-                  type="password"
-                  name="motDePasse"
+                  type="password" name="motDePasse"
                   value={formData.motDePasse}
                   onChange={handleChange}
                   className={styles.input}
@@ -223,8 +256,7 @@ export default function Inscription() {
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Confirmer le mot de passe</label>
                 <input
-                  type="password"
-                  name="confirmMotDePasse"
+                  type="password" name="confirmMotDePasse"
                   value={formData.confirmMotDePasse}
                   onChange={handleChange}
                   className={styles.input}
@@ -240,7 +272,8 @@ export default function Inscription() {
                     value={formData.departement}
                     onChange={handleChange}
                     className={styles.input}
-                    style={{ cursor: 'pointer' }}
+                    disabled={champPreRempli}
+                    style={champPreRempli ? { opacity: 0.6, cursor: 'not-allowed' } : { cursor: 'pointer' }}
                   >
                     <option value="">-- Choisir --</option>
                     {departements.map((dep, index) => (
@@ -256,7 +289,8 @@ export default function Inscription() {
                     value={formData.grade}
                     onChange={handleChange}
                     className={styles.input}
-                    style={{ cursor: 'pointer' }}
+                    disabled={champPreRempli}
+                    style={champPreRempli ? { opacity: 0.6, cursor: 'not-allowed' } : { cursor: 'pointer' }}
                   >
                     <option value="">-- Choisir --</option>
                     {grades.map((gr, index) => (

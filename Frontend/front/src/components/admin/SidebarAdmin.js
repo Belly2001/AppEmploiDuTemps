@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import styles from '@/styles/Admin.module.css'
 import { HiOutlineBuildingLibrary } from 'react-icons/hi2'
+import { FaPersonCircleQuestion } from "react-icons/fa6";
 import { FaChalkboardTeacher, FaDoorOpen, FaCalendarAlt, FaEnvelopeOpenText, FaBell, FaUserCircle, FaBars, FaTimes } from 'react-icons/fa'
 
 export default function SidebarAdmin({ sectionActive, changerSection }) {
@@ -13,6 +14,7 @@ export default function SidebarAdmin({ sectionActive, changerSection }) {
     { id: 'edt', label: 'Emplois du temps', icon: <FaCalendarAlt size={20} /> },
     { id: 'demandes', label: 'Demandes', icon: <FaEnvelopeOpenText size={20} /> },
     { id: 'notifications', label: 'Notifications', icon: <FaBell size={20} /> },
+    { id: 'inscriptions', label: 'Candidatures', icon: <FaPersonCircleQuestion size={20} /> },
     { id: 'profil', label: 'Mon profil', icon: <FaUserCircle size={20} /> }
   ]
 
