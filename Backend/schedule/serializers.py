@@ -78,5 +78,4 @@ class FormationSerializer(serializers.ModelSerializer):
 class DemandeInscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = DemandeInscription
-        fields = ["id_demande", "nom", "prenom", "email", "departement", "grade", "cv_base64", "cv_nom_fichier", "statut", "message_reponse", "date_demande", "date_reponse"]
-        
+        fields = ["id_demande", "nom", "prenom", "email", "departement", "grade", "code_enseignant", "statut", "message_reponse", "date_demande", "date_reponse"]

@@ -764,26 +764,27 @@ def generer_edt(request, id_formation):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def soumettre_demande_inscription(request):
-    """Un candidat soumet sa demande pour devenir enseignant"""
-    # verifier si l'email existe deja
     email = request.data.get("email")
+    code = request.data.get("code_enseignant", "")
+
     if Enseignant.objects.filter(email=email).exists():
         return Response({"detail": "Un compte existe déjà avec cet email"}, status=400)
     if DemandeInscription.objects.filter(email=email, statut='en_attente').exists():
         return Response({"detail": "Une demande est déjà en cours avec cet email"}, status=400)
+    if not code.startswith("31"):
+        return Response({"detail": "Le code enseignant doit commencer par 31"}, status=400)
 
     ser = DemandeInscriptionSerializer(data=request.data)
     if ser.is_valid():
         demande = ser.save()
 
-        # notifier l'admin qu'il y a une nouvelle demande
         admins = Administrateur.objects.all()
         for admin in admins:
             Notification.objects.create(
                 destinataire_type='admin',
                 id_admin=admin,
                 titre='Nouvelle demande d\'inscription',
-                message=f"{request.data.get('prenom')} {request.data.get('nom')} souhaite rejoindre le département {request.data.get('departement', 'Non précisé')}.",
+                message=f"{request.data.get('prenom')} {request.data.get('nom')} (code: {code}) souhaite rejoindre le département {request.data.get('departement', 'Non précisé')}.",
                 date_envoi=timezone.now(),
                 est_lue=False
             )
@@ -811,7 +812,6 @@ def verifier_statut_demande(request):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def liste_demandes_inscription(request):
-    """L'admin voit toutes les demandes d'inscription"""
     qs = DemandeInscription.objects.all().order_by("-date_demande")
     return Response(DemandeInscriptionSerializer(qs, many=True).data)
 

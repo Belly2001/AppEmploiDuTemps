@@ -2,22 +2,22 @@ import { useState, useEffect } from 'react'
 import styles from '@/styles/Admin.module.css'
 import { apiGetDemandesInscription, apiRepondreDemandeInscription } from '@/services/api'
 
-// icones
 import { 
-  FaUserGraduate, FaDownload, FaCheck, FaTimes, 
-  FaSpinner, FaClock, FaCheckCircle, FaTimesCircle,
-  FaFilePdf, FaEnvelope, FaBuilding
+  FaUserGraduate, FaCheck, FaTimes, FaSpinner, FaClock, 
+  FaCheckCircle, FaTimesCircle, FaEnvelope, FaBuilding, FaIdBadge
 } from 'react-icons/fa'
 
 export default function GestionInscriptions() {
   const [demandes, setDemandes] = useState([])
   const [chargement, setChargement] = useState(true)
-  const [messageReponse, setMessageReponse] = useState({}) // { id: "message..." }
-  const [enCours, setEnCours] = useState(null) // id de la demande en cours de traitement
+  const [messageReponse, setMessageReponse] = useState({})
+  const [enCours, setEnCours] = useState(null)
 
-  // charger les demandes au montage
   useEffect(() => {
     chargerDemandes()
+    // on rafraîchit aussi toutes les 10s pour voir les nouvelles demandes
+    const interval = setInterval(chargerDemandes, 10000)
+    return () => clearInterval(interval)
   }, [])
 
   const chargerDemandes = async () => {
@@ -31,34 +31,7 @@ export default function GestionInscriptions() {
     }
   }
 
-  // telecharger le CV (on décode le base64 et on crée un lien de téléchargement)
-  const telechargerCV = (demande) => {
-    if (!demande.cv_base64) {
-      alert('Aucun CV disponible')
-      return
-    }
-
-    // on reconstruit le fichier PDF à partir du base64
-    const byteCharacters = atob(demande.cv_base64)
-    const byteNumbers = new Array(byteCharacters.length)
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i)
-    }
-    const byteArray = new Uint8Array(byteNumbers)
-    const blob = new Blob([byteArray], { type: 'application/pdf' })
-
-    // on crée un lien temporaire pour le téléchargement
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = demande.cv_nom_fichier || `CV_${demande.nom}_${demande.prenom}.pdf`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
-
-  // répondre à une demande (accepter ou rejeter)
+  // accepter ou rejeter
   const repondre = async (idDemande, statut) => {
     setEnCours(idDemande)
     try {
@@ -66,7 +39,6 @@ export default function GestionInscriptions() {
         statut: statut,
         message_reponse: messageReponse[idDemande] || ''
       })
-      // recharger la liste
       await chargerDemandes()
     } catch (err) {
       console.error('Erreur:', err)
@@ -76,7 +48,6 @@ export default function GestionInscriptions() {
     }
   }
 
-  // séparer les demandes par statut
   const enAttente = demandes.filter(d => d.statut === 'en_attente')
   const traitees = demandes.filter(d => d.statut !== 'en_attente')
 
@@ -84,7 +55,7 @@ export default function GestionInscriptions() {
     return (
       <div className={styles.pageContent}>
         <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.5)' }}>
-          <FaSpinner className={styles.spinner || ''} style={{ fontSize: '24px', animation: 'spin 1s linear infinite' }} />
+          <FaSpinner style={{ fontSize: '24px', animation: 'spin 1s linear infinite' }} />
           <p style={{ marginTop: '15px' }}>Chargement des demandes...</p>
         </div>
       </div>
@@ -103,7 +74,7 @@ export default function GestionInscriptions() {
         </p>
       </div>
 
-      {/* ===== DEMANDES EN ATTENTE ===== */}
+      {/* ===== EN ATTENTE ===== */}
       {enAttente.length === 0 ? (
         <div style={{
           textAlign: 'center', padding: '50px 20px',
@@ -119,14 +90,12 @@ export default function GestionInscriptions() {
             <div key={demande.id_demande} style={{
               background: 'rgba(255,255,255,0.03)',
               border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '16px',
-              padding: '25px',
-              transition: 'all 0.3s ease'
+              borderRadius: '16px', padding: '25px', transition: 'all 0.3s ease'
             }}>
-              {/* en-tête : nom + badge en attente */}
+              {/* en-tête */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
                 <div>
-                  <h3 style={{ color: 'white', fontSize: '18px', fontWeight: '700', margin: '0 0 4px 0' }}>
+                  <h3 style={{ color: 'white', fontSize: '18px', fontWeight: '700', margin: '0 0 6px 0' }}>
                     {demande.prenom} {demande.nom}
                   </h3>
                   <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
@@ -151,29 +120,32 @@ export default function GestionInscriptions() {
                 </span>
               </div>
 
-              {/* date + bouton télécharger CV */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
+              {/* code enseignant bien visible */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '12px 16px', marginBottom: '15px',
+                background: 'rgba(129, 140, 248, 0.06)',
+                border: '1px solid rgba(129, 140, 248, 0.15)',
+                borderRadius: '10px'
+              }}>
+                <FaIdBadge style={{ color: '#818cf8', fontSize: '16px' }} />
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>Code enseignant :</span>
+                <span style={{
+                  color: '#818cf8', fontSize: '18px', fontWeight: '700',
+                  fontFamily: "'Sora', monospace", letterSpacing: '2px'
+                }}>
+                  {demande.code_enseignant}
+                </span>
+              </div>
+
+              {/* date */}
+              <div style={{ marginBottom: '15px' }}>
                 <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px' }}>
                   Reçue le {new Date(demande.date_demande).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </span>
-                {demande.cv_base64 && (
-                  <button
-                    onClick={() => telechargerCV(demande)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '8px',
-                      padding: '8px 16px', background: 'rgba(129, 140, 248, 0.1)',
-                      border: '1px solid rgba(129, 140, 248, 0.2)', borderRadius: '10px',
-                      color: '#818cf8', fontSize: '13px', fontWeight: '600',
-                      cursor: 'pointer', transition: 'all 0.3s ease'
-                    }}
-                  >
-                    <FaDownload size={12} /> Télécharger le CV
-                    <FaFilePdf size={12} style={{ color: '#ef4444' }} />
-                  </button>
-                )}
               </div>
 
-              {/* message optionnel de l'admin */}
+              {/* message optionnel */}
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px', display: 'block' }}>
                   Message (optionnel) :
@@ -185,7 +157,8 @@ export default function GestionInscriptions() {
                   onChange={(e) => setMessageReponse(prev => ({ ...prev, [demande.id_demande]: e.target.value }))}
                   style={{
                     width: '100%', padding: '10px 14px',
-                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
                     borderRadius: '10px', color: 'white', fontSize: '14px',
                     outline: 'none', fontFamily: 'inherit'
                   }}
@@ -226,7 +199,7 @@ export default function GestionInscriptions() {
         </div>
       )}
 
-      {/* ===== DEMANDES TRAITÉES ===== */}
+      {/* ===== TRAITÉES ===== */}
       {traitees.length > 0 && (
         <>
           <h2 style={{ color: 'white', fontSize: '18px', fontWeight: '700', margin: '40px 0 15px' }}>
@@ -237,16 +210,21 @@ export default function GestionInscriptions() {
               <div key={demande.id_demande} style={{
                 background: 'rgba(255,255,255,0.02)',
                 border: '1px solid rgba(255,255,255,0.05)',
-                borderRadius: '12px',
-                padding: '16px 20px',
+                borderRadius: '12px', padding: '16px 20px',
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 flexWrap: 'wrap', gap: '10px'
               }}>
-                <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                   <span style={{ color: 'white', fontWeight: '600', fontSize: '15px' }}>
                     {demande.prenom} {demande.nom}
                   </span>
-                  <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '13px', marginLeft: '10px' }}>
+                  <span style={{ 
+                    color: 'rgba(129, 140, 248, 0.7)', fontSize: '13px', 
+                    fontFamily: "'Sora', monospace", letterSpacing: '1px' 
+                  }}>
+                    {demande.code_enseignant}
+                  </span>
+                  <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '13px' }}>
                     {demande.email}
                   </span>
                 </div>
