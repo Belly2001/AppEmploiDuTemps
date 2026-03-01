@@ -331,7 +331,12 @@ export async function apiSoumettreDemandeInscription(data) {
   })
   if (!res.ok) {
     const err = await res.json().catch(() => null)
-    throw new Error(err?.detail || "Erreur lors de l'envoi de la demande")
+    // on affiche le vrai message d'erreur du backend
+    if (err) {
+      const msg = err.detail || err.email?.[0] || Object.values(err)?.[0]?.[0] || "Erreur lors de l'envoi"
+      throw new Error(msg)
+    }
+    throw new Error("Erreur lors de l'envoi de la demande")
   }
   return await res.json()
 }
