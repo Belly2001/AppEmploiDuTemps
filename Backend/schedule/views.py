@@ -7,13 +7,11 @@ from django.db import models
 from datetime import time, date, timedelta
 
 
-
-
-from .models import Enseignant, Salle, Cours, EmploiDuTemps, Notification, Administrateur, Disponibilite, Demande, Formation, Matiere, EnseignantMatiere
+from .models import Enseignant, Salle, Cours, EmploiDuTemps, Notification, Administrateur, Disponibilite, Demande, Formation, Matiere, EnseignantMatiere, DemandeInscription
 from .serializers import (
     EnseignantSerializer, SalleSerializer, CoursSerializer,
     EDTSerializer, NotificationSerializer, AdminMeSerializer, DisponibiliteSerializer, DemandeSerializer,
-    FormationSerializer, MatiereSerializer
+    FormationSerializer, MatiereSerializer, DemandeInscriptionSerializer
 )
 
 @api_view(["GET"])
@@ -758,3 +756,82 @@ def generer_edt(request, id_formation):
         "erreurs": erreurs,
         "formation": formation.nom_formation
     }, status=201)
+    
+    
+# ---------------------------
+# DEMANDES D'INSCRIPTION
+# ---------------------------
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def soumettre_demande_inscription(request):
+    """Un candidat soumet sa demande pour devenir enseignant"""
+    # verifier si l'email existe deja
+    email = request.data.get("email")
+    if Enseignant.objects.filter(email=email).exists():
+        return Response({"detail": "Un compte existe déjà avec cet email"}, status=400)
+    if DemandeInscription.objects.filter(email=email, statut='en_attente').exists():
+        return Response({"detail": "Une demande est déjà en cours avec cet email"}, status=400)
+
+    ser = DemandeInscriptionSerializer(data=request.data)
+    if ser.is_valid():
+        demande = ser.save()
+
+        # notifier l'admin qu'il y a une nouvelle demande
+        admins = Administrateur.objects.all()
+        for admin in admins:
+            Notification.objects.create(
+                destinataire_type='admin',
+                id_admin=admin,
+                titre='Nouvelle demande d\'inscription',
+                message=f"{request.data.get('prenom')} {request.data.get('nom')} souhaite rejoindre le département {request.data.get('departement', 'Non précisé')}.",
+                date_envoi=timezone.now(),
+                est_lue=False
+            )
+
+        return Response(ser.data, status=201)
+    return Response(ser.errors, status=400)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def verifier_statut_demande(request):
+    """Le candidat verifie le statut de sa demande avec son email"""
+    email = request.GET.get("email")
+    if not email:
+        return Response({"detail": "Email requis"}, status=400)
+
+    try:
+        demande = DemandeInscription.objects.filter(email=email).latest('date_demande')
+    except DemandeInscription.DoesNotExist:
+        return Response({"detail": "Aucune demande trouvée"}, status=404)
+
+    return Response(DemandeInscriptionSerializer(demande).data)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def liste_demandes_inscription(request):
+    """L'admin voit toutes les demandes d'inscription"""
+    qs = DemandeInscription.objects.all().order_by("-date_demande")
+    return Response(DemandeInscriptionSerializer(qs, many=True).data)
+
+
+@api_view(["PATCH"])
+@permission_classes([AllowAny])
+def repondre_demande_inscription(request, id_demande):
+    """L'admin accepte ou rejette une demande"""
+    try:
+        demande = DemandeInscription.objects.get(id_demande=id_demande)
+    except DemandeInscription.DoesNotExist:
+        return Response({"detail": "Demande introuvable"}, status=404)
+
+    nouveau_statut = request.data.get("statut")
+    if nouveau_statut not in ["acceptee", "rejetee"]:
+        return Response({"detail": "Statut invalide"}, status=400)
+
+    demande.statut = nouveau_statut
+    demande.message_reponse = request.data.get("message_reponse", "")
+    demande.date_reponse = timezone.now()
+    demande.save()
+
+    return Response(DemandeInscriptionSerializer(demande).data)

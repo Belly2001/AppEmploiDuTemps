@@ -41,4 +41,9 @@ urlpatterns = [
     path('admin/recherche-enseignant/', views.rechercher_enseignant, name='rechercher_enseignant'),
     path('admin/formations/<int:id_formation>/generer-edt/', views.generer_edt, name='generer_edt'),
     path('admin/formations/<int:id_formation>/edt/', views.edt_formation, name='edt_formation'),
+    # Demandes d'inscription
+    path('inscription/demande/', views.soumettre_demande_inscription, name='soumettre_demande_inscription'),
+    path('inscription/statut/', views.verifier_statut_demande, name='verifier_statut_demande'),
+    path('admin/inscriptions/', views.liste_demandes_inscription, name='liste_demandes_inscription'),
+    path('admin/inscriptions/<int:id_demande>/repondre/', views.repondre_demande_inscription, name='repondre_demande_inscription'),
 ]

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Enseignant, Salle, Administrateur, Cours, EmploiDuTemps, Notification, Matiere, Disponibilite, Demande, Formation
+from .models import Enseignant, Salle, Administrateur, Cours, EmploiDuTemps, Notification, Matiere, Disponibilite, Demande, Formation, DemandeInscription
 class EnseignantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Enseignant
@@ -73,4 +73,10 @@ class FormationSerializer(serializers.ModelSerializer):
         model = Formation
         fields = ["id_formation", "nom_formation", "departement", "niveau", "semestre_actuel", "effectif"]
         
+        
+
+class DemandeInscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DemandeInscription
+        fields = ["id_demande", "nom", "prenom", "email", "departement", "grade", "cv_base64", "cv_nom_fichier", "statut", "message_reponse", "date_demande", "date_reponse"]
         
