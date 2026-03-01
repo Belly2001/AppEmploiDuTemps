@@ -16,14 +16,14 @@ export default function Home() {
     {
       numero: '01',
       icon: <FaUserPlus size={24} />,
-      titre: 'Inscrivez vos enseignants',
-      desc: 'Ajoutez les enseignants avec leurs matières, départements et grades. Chaque enseignant reçoit un accès personnel.',
+      titre: 'Inscrivez vous',
+      desc: 'Renseignez vos informations personnelles; votre departement de choix , et reçevez un accès personnel.',
     },
     {
       numero: '02',
       icon: <FaClock size={24} />,
       titre: 'Renseignez les disponibilités',
-      desc: 'Les enseignants indiquent leurs créneaux disponibles et leurs préférences horaires directement depuis leur espace.',
+      desc: 'Les enseignants indiquent leurs créneaux disponibles, et vos préférences horaires de chacun de votre(ou vos) ;matière(s) directement depuis leur espace.',
     },
     {
       numero: '03',
@@ -34,8 +34,8 @@ export default function Home() {
     {
       numero: '04',
       icon: <FaDownload size={24} />,
-      titre: 'Exportez et partagez',
-      desc: "Visualisez le résultat, modifiez si besoin, puis exportez en PDF pour le partager avec toute l'équipe.",
+      titre: 'Exportez en pdf ',
+      desc: "Visualisez le résultat, modifiez si besoin, puis exportez en PDF à tout moment.",
     },
   ]
 
@@ -44,7 +44,7 @@ export default function Home() {
     {
       icon: <FaCalendarAlt size={22} />,
       titre: 'Gain de temps',
-      desc: '<Quelques clics et notre algorithme fait le reste. Un emploi du temps complet en quelques minutes.',
+      desc: 'Quelques clics et notre algorithme fait le reste. Un emploi du temps complet en quelques minutes.',
     },
     {
       icon: <FaShieldAlt size={22} />,
