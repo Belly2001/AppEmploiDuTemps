@@ -177,3 +177,21 @@ class Demande(models.Model):
     class Meta:
         managed = False
         db_table = 'demande'
+        
+class DemandeInscription(models.Model):
+    id_demande = models.AutoField(primary_key=True)
+    nom = models.CharField(max_length=100)
+    prenom = models.CharField(max_length=100)
+    email = models.CharField(unique=True, max_length=150)
+    departement = models.CharField(max_length=100, blank=True, null=True)
+    grade = models.CharField(max_length=50, blank=True, null=True)
+    cv_base64 = models.TextField(blank=True, null=True)
+    cv_nom_fichier = models.CharField(max_length=255, blank=True, null=True)
+    statut = models.CharField(max_length=20, default='en_attente')
+    message_reponse = models.TextField(blank=True, null=True)
+    date_demande = models.DateTimeField(auto_now_add=True)
+    date_reponse = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'demande_inscription'
