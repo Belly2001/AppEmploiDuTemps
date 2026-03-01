@@ -17,13 +17,13 @@ export default function Home() {
       numero: '01',
       icon: <FaUserPlus size={24} />,
       titre: 'Inscrivez vous',
-      desc: 'Renseignez vos informations personnelles; votre departement de choix , et reçevez un accès personnel.',
+      desc: 'Les enseignant Renseignez vos informations personnelles; votre departement de choix , et reçevez un accès personnel.',
     },
     {
       numero: '02',
       icon: <FaClock size={24} />,
       titre: 'Renseignez les disponibilités',
-      desc: 'Les enseignants indiquent leurs créneaux disponibles, et vos préférences horaires de chacun de votre(ou vos) ;matière(s) directement depuis leur espace.',
+      desc: 'Indiquez vos créneaux disponibles, et vos préférences horaires pour chacun de votre(ou vos) matière(s) directement depuis leur espace.',
     },
     {
       numero: '03',
