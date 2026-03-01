@@ -17,7 +17,7 @@ export default function Home() {
       numero: '01',
       icon: <FaUserPlus size={24} />,
       titre: 'Inscrivez vous',
-      desc: 'Les enseignant Renseignez vos informations personnelles; votre departement de choix , et reçevez un accès personnel.',
+      desc: 'Renseignez vos informations personnelles; votre departement de choix , et reçevez un accès personnel.',
     },
     {
       numero: '02',
