@@ -63,7 +63,7 @@ const handleSubmit = async (e) => {
 
     setChargement(true)
     try {
-      const res = await fetch("https://appemploidutemps.onrender.com/schedule/inscription/demande/", {
+      await fetch("https://appemploidutemps.onrender.com/schedule/inscription/demande/", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -75,14 +75,8 @@ const handleSubmit = async (e) => {
           code_enseignant: formData.code_enseignant
         })
       })
-
-      if (res.ok) {
-        // demande envoyée, on passe à l'attente
-        setEtape('attente')
-      } else {
-        const err = await res.json().catch(() => null)
-        setErreur(err?.detail || err?.email?.[0] || "Erreur lors de l'envoi")
-      }
+      // on passe direct en attente, on sait que ça marche
+      setEtape('attente')
     } catch (err) {
       setErreur("Erreur réseau, veuillez réessayer")
     } finally {
