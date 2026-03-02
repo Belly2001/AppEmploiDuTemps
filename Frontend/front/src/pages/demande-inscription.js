@@ -46,7 +46,7 @@ export default function DemandeInscription() {
   }
 
   // -- soumission --
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault()
     setErreur('')
 
@@ -63,17 +63,28 @@ export default function DemandeInscription() {
 
     setChargement(true)
     try {
-      await apiSoumettreDemandeInscription({
-        nom: formData.nom,
-        prenom: formData.prenom,
-        email: formData.email,
-        departement: formData.departement,
-        grade: formData.grade,
-        code_enseignant: formData.code_enseignant
+      const res = await fetch("https://appemploidutemps.onrender.com/schedule/inscription/demande/", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nom: formData.nom,
+          prenom: formData.prenom,
+          email: formData.email,
+          departement: formData.departement,
+          grade: formData.grade,
+          code_enseignant: formData.code_enseignant
+        })
       })
-      setEtape('attente')
+
+      if (res.ok) {
+        // demande envoyée, on passe à l'attente
+        setEtape('attente')
+      } else {
+        const err = await res.json().catch(() => null)
+        setErreur(err?.detail || err?.email?.[0] || "Erreur lors de l'envoi")
+      }
     } catch (err) {
-      setErreur(err.message)
+      setErreur("Erreur réseau, veuillez réessayer")
     } finally {
       setChargement(false)
     }
