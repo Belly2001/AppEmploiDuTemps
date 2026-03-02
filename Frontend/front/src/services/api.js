@@ -329,16 +329,12 @@ export async function apiSoumettreDemandeInscription(data) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   })
+  const result = await res.json().catch(() => null)
   if (!res.ok) {
-    const err = await res.json().catch(() => null)
-    // on affiche le vrai message d'erreur du backend
-    if (err) {
-      const msg = err.detail || err.email?.[0] || Object.values(err)?.[0]?.[0] || "Erreur lors de l'envoi"
-      throw new Error(msg)
-    }
-    throw new Error("Erreur lors de l'envoi de la demande")
+    const msg = result?.detail || result?.email?.[0] || "Erreur lors de l'envoi"
+    throw new Error(msg)
   }
-  return await res.json()
+  return result
 }
 
 // verifier où en est la demande (candidat)
