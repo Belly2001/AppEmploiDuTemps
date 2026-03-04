@@ -1,8 +1,11 @@
-import { useState } from 'react'
+//import { useState } from 'react'
 import Link from 'next/link'
 import styles from '@/styles/Accueil.module.css'
 
-// -- icones react-icons (on prend que ce qu'on a besoin)
+/**
+ * Import sélectif des icônes afin de limiter le poids du bundle.
+ * On évite un import global de la librairie.
+ */
 import { 
   FaCalendarAlt, FaChalkboardTeacher, FaBuilding, FaFilePdf, 
   FaPlay, FaArrowRight, FaUserPlus, FaClock, FaMagic, 
@@ -11,7 +14,7 @@ import {
 
 export default function Home() {
 
-  // les étapes pour la section "comment ça marche"
+  
   const etapes = [
     {
       numero: '01',
@@ -40,6 +43,7 @@ export default function Home() {
   ]
 
   // les avantages clés de la plateforme
+
   const avantages = [
     {
       icon: <FaCalendarAlt size={22} />,

@@ -1,3 +1,12 @@
+/**
+ * PAGE DE CONNEXION
+ *
+ * Rôle :
+ * - Permet à un utilisateur de se connecter
+ * - Appelle l'API pour vérifier les identifiants
+ * - Stocke les informations utilisateur
+ * - Redirige selon le rôle (admin / enseignant)
+ */
 import { useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
@@ -5,11 +14,32 @@ import styles from '@/styles/Connexion.module.css'
 import { loginUser } from '@/services/api'
 
 export default function Connexion() {
+    /**
+   * ÉTATS LOCAUX DU FORMULAIRE
+   * 
+   * useState permet de stocker des valeurs
+   * qui peuvent changer dans le composant.
+   */
+    
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [erreur, setErreur] = useState('')
   const [chargement, setChargement] = useState(false)
+    /**
+   * Hook Next.js permettant de rediriger
+   * l'utilisateur vers une autre page.
+   */
   const router = useRouter()
+
+  /**
+   * GESTION DE LA SOUMISSION DU FORMULAIRE
+   * 
+   * Cette fonction :
+   * 1. Empêche le rechargement de la page
+   * 2. Appelle l'API de connexion
+   * 3. Stocke les données utilisateur
+   * 4. Redirige selon le rôle
+   */
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -17,12 +47,25 @@ export default function Connexion() {
     setChargement(true)
 
     try {
+       /**
+       * Appel API :
+       * Vérifie si email + mot de passe sont corrects.
+       */
       const data = await loginUser(email, password)
 
-      // Stocker les infos de l'utilisateur connecté
+
+      /**
+       * On sauvegarde les informations de l'utilisateur
+       * dans le navigateur pour garder la session active.
+       */
       localStorage.setItem('user', JSON.stringify(data))
 
-      // Rediriger selon le rôle
+      
+      /**
+       * Redirection selon le rôle.
+       * Cela permet d'envoyer chaque type d'utilisateur
+       * vers son espace dédié.
+       */
       if (data.role === 'admin') {
         router.push('/admin')
       } else {
@@ -30,9 +73,19 @@ export default function Connexion() {
       }
 
     } catch (err) {
+
+      /**
+       * En cas d'erreur (mauvais mot de passe,
+       * serveur indisponible, etc.)
+       */
       console.error('Erreur connexion:', err)
       setErreur(err.message || 'Erreur de connexion au serveur')
     } finally {
+
+      /**
+       * Le bloc finally s'exécute toujours,
+       * que la connexion réussisse ou échoue.
+       */
       setChargement(false)
     }
   }
@@ -98,6 +151,11 @@ export default function Connexion() {
             <h1 className={styles.title}>Connexion</h1>
             <p className={styles.subtitle}>Accédez à votre espace</p>
 
+             {/* 
+              Affiche le message d'erreur uniquement
+              si une erreur existe.
+            */}
+
             {erreur && (
               <div style={{
                 backgroundColor: '#ffe6e6',
@@ -141,7 +199,9 @@ export default function Connexion() {
                 <a href="#">Mot de passe oublié ?</a>
               </div>
 
-              <button type="submit" className={styles.submitButton} disabled={chargement}>
+              <button type="submit" className={styles.submitButton}
+               disabled={chargement}        //Désactivé pendant le chargement
+               >   
                 {chargement ? 'Connexion en cours...' : 'Se connecter'}
               </button>
 
