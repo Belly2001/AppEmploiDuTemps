@@ -206,7 +206,7 @@ export default function Connexion() {
 
               <p className={styles.signupText}>
                 Pas encore de compte ?{' '}
-                <Link href="/inscription" className={styles.signupLink}>
+                <Link href="/demande-inscription" className={styles.signupLink}>
                   Créer un compte
                 </Link>
               </p>

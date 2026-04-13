@@ -153,7 +153,7 @@ export default function EnvoyerNotification() {
               className={styles.select}
             >
               <option value="">-- Choisir un destinataire --</option>
-              <option value="tous">📢 Tous les enseignants</option>
+              <option value="tous"> Tous les enseignants</option>
               <optgroup label="Enseignants individuels">
                 {enseignants.map(ens => (
                   <option key={ens.id_enseignant} value={ens.id_enseignant}>
