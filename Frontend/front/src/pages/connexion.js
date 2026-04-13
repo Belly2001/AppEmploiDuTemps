@@ -53,7 +53,6 @@ export default function Connexion() {
        */
       const data = await loginUser(email, password)
 
-
       /**
        * On sauvegarde les informations de l'utilisateur
        * dans le navigateur pour garder la session active.
