@@ -46,4 +46,5 @@ urlpatterns = [
     path('inscription/statut/', views.verifier_statut_demande, name='verifier_statut_demande'),
     path('admin/inscriptions/', views.liste_demandes_inscription, name='liste_demandes_inscription'),
     path('admin/inscriptions/<int:id_demande>/repondre/', views.repondre_demande_inscription, name='repondre_demande_inscription'),
+    path('creneaux-occupes/', views.get_all_creneaux_occupes, name='creneaux_occupes'),
 ]

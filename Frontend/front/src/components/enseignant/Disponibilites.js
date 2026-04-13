@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import styles from '@/styles/Enseignant.module.css'
-import { getDisponibilites, apiAjouterDisponibilite, apiSupprimerDisponibilite } from '@/services/api'
-import { FaCheckCircle, FaClock, FaSave, FaTrash } from 'react-icons/fa'
+import { getDisponibilites, apiAjouterDisponibilite, apiSupprimerDisponibilite, getCreneauxOccupes } from '@/services/api'
+import { FaCheckCircle, FaClock, FaSave, FaLock } from 'react-icons/fa'
 
 export default function Disponibilites({ enseignant }) {
 
@@ -16,34 +16,51 @@ export default function Disponibilites({ enseignant }) {
   ]
 
   const [disponibilites, setDisponibilites] = useState([])
+  const [creneauxOccupes, setCreneauxOccupes] = useState([])
   const [chargement, setChargement] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState({ type: '', texte: '' })
 
   useEffect(() => {
     if (enseignant && enseignant.id) {
-      chargerDisponibilites()
+      chargerTout()
     }
   }, [enseignant])
 
-  const chargerDisponibilites = async () => {
+  // Charger les disponibilités de l'enseignant ET les créneaux occupés par les autres
+  const chargerTout = async () => {
     try {
       setChargement(true)
-      const data = await getDisponibilites(enseignant.id)
-      setDisponibilites(data)
+      const [mesDispos, tousLesCreneaux] = await Promise.all([
+        getDisponibilites(enseignant.id),
+        getCreneauxOccupes()
+      ])
+      setDisponibilites(mesDispos)
+      // Filtrer pour ne garder que les créneaux des AUTRES enseignants
+      const creneauxAutres = tousLesCreneaux.filter(c => c.id_enseignant !== enseignant.id)
+      setCreneauxOccupes(creneauxAutres)
     } catch (err) {
-      console.error('Erreur chargement disponibilités:', err)
+      console.error('Erreur chargement:', err)
     } finally {
       setChargement(false)
     }
   }
 
-  // Vérifie si un créneau est coché
+  // Vérifie si un créneau est coché par MOI
   const estCoche = (jour, debut, fin) => {
     return disponibilites.some(d =>
       d.jour === jour &&
       d.heure_debut === debut + ':00' &&
       d.heure_fin === fin + ':00'
+    )
+  }
+
+  // Vérifie si un créneau est pris par un AUTRE enseignant
+  const estOccupe = (jour, debut, fin) => {
+    return creneauxOccupes.find(c =>
+      c.jour === jour &&
+      c.heure_debut === debut + ':00' &&
+      c.heure_fin === fin + ':00'
     )
   }
 
@@ -57,20 +74,29 @@ export default function Disponibilites({ enseignant }) {
     return dispo ? dispo.id_disponibilite : null
   }
 
-  // Toggle un créneau
+  // Toggle un créneau (seulement si pas occupé par un autre)
   const toggleCreneau = async (jour, creneau) => {
+    // Vérifier si le créneau est pris par quelqu'un d'autre
+    const occupe = estOccupe(jour, creneau.debut, creneau.fin)
+    if (occupe) {
+      setMessage({ 
+        type: 'erreur', 
+        texte: `Ce créneau est déjà pris par ${occupe.nom_enseignant}` 
+      })
+      setTimeout(() => setMessage({ type: '', texte: '' }), 3000)
+      return
+    }
+
     const coche = estCoche(jour, creneau.debut, creneau.fin)
 
     try {
       setSaving(true)
       if (coche) {
-        // Supprimer
         const id = getDispoId(jour, creneau.debut, creneau.fin)
         if (id) {
           await apiSupprimerDisponibilite(id)
         }
       } else {
-        // Ajouter
         await apiAjouterDisponibilite(enseignant.id, {
           jour: jour,
           heure_debut: creneau.debut,
@@ -79,7 +105,7 @@ export default function Disponibilites({ enseignant }) {
           commentaire: ''
         })
       }
-      await chargerDisponibilites()
+      await chargerTout()
     } catch (err) {
       console.error('Erreur toggle créneau:', err)
       setMessage({ type: 'erreur', texte: 'Erreur lors de la mise à jour' })
@@ -89,21 +115,20 @@ export default function Disponibilites({ enseignant }) {
     }
   }
 
-  // Tout cocher un jour
+  // Tout cocher un jour (en ignorant les créneaux occupés)
   const toutCocherJour = async (jour) => {
-    const tousCoches = creneaux.every(c => estCoche(jour, c.debut, c.fin))
+    const creneauxLibres = creneaux.filter(c => !estOccupe(jour, c.debut, c.fin))
+    const tousCoches = creneauxLibres.every(c => estCoche(jour, c.debut, c.fin))
     
     try {
       setSaving(true)
       if (tousCoches) {
-        // Tout décocher
-        for (const c of creneaux) {
+        for (const c of creneauxLibres) {
           const id = getDispoId(jour, c.debut, c.fin)
           if (id) await apiSupprimerDisponibilite(id)
         }
       } else {
-        // Cocher les manquants
-        for (const c of creneaux) {
+        for (const c of creneauxLibres) {
           if (!estCoche(jour, c.debut, c.fin)) {
             await apiAjouterDisponibilite(enseignant.id, {
               jour: jour,
@@ -115,7 +140,7 @@ export default function Disponibilites({ enseignant }) {
           }
         }
       }
-      await chargerDisponibilites()
+      await chargerTout()
     } catch (err) {
       console.error('Erreur:', err)
     } finally {
@@ -123,19 +148,20 @@ export default function Disponibilites({ enseignant }) {
     }
   }
 
-  // Tout cocher un créneau (même heure tous les jours)
+  // Tout cocher un créneau (en ignorant les jours occupés)
   const toutCocherCreneau = async (creneau) => {
-    const tousCoches = jours.every(j => estCoche(j, creneau.debut, creneau.fin))
+    const joursLibres = jours.filter(j => !estOccupe(j, creneau.debut, creneau.fin))
+    const tousCoches = joursLibres.every(j => estCoche(j, creneau.debut, creneau.fin))
     
     try {
       setSaving(true)
       if (tousCoches) {
-        for (const j of jours) {
+        for (const j of joursLibres) {
           const id = getDispoId(j, creneau.debut, creneau.fin)
           if (id) await apiSupprimerDisponibilite(id)
         }
       } else {
-        for (const j of jours) {
+        for (const j of joursLibres) {
           if (!estCoche(j, creneau.debut, creneau.fin)) {
             await apiAjouterDisponibilite(enseignant.id, {
               jour: j,
@@ -147,7 +173,7 @@ export default function Disponibilites({ enseignant }) {
           }
         }
       }
-      await chargerDisponibilites()
+      await chargerTout()
     } catch (err) {
       console.error('Erreur:', err)
     } finally {
@@ -156,6 +182,7 @@ export default function Disponibilites({ enseignant }) {
   }
 
   const nbCoches = disponibilites.length
+  const nbOccupes = creneauxOccupes.length
   const nbTotal = jours.length * creneaux.length
 
   if (chargement) {
@@ -178,10 +205,10 @@ export default function Disponibilites({ enseignant }) {
               Mes disponibilités
             </h3>
             <p style={{ margin: '5px 0 0', color: '#666', fontSize: '14px' }}>
-              Cliquez sur les créneaux où vous êtes disponible
+              Cliquez sur les créneaux où vous êtes disponible. Les créneaux grisés sont déjà pris.
             </p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
             <span style={{
               padding: '8px 16px', borderRadius: '20px', fontSize: '14px', fontWeight: '600',
               backgroundColor: nbCoches > 0 ? '#e8f5e9' : '#fff3e0',
@@ -189,8 +216,18 @@ export default function Disponibilites({ enseignant }) {
               display: 'flex', alignItems: 'center', gap: '6px'
             }}>
               <FaCheckCircle size={14} />
-              {nbCoches} / {nbTotal} créneaux sélectionnés
+              {nbCoches} sélectionné(s)
             </span>
+            {nbOccupes > 0 && (
+              <span style={{
+                padding: '8px 16px', borderRadius: '20px', fontSize: '14px', fontWeight: '600',
+                backgroundColor: '#f5f5f5', color: '#999',
+                display: 'flex', alignItems: 'center', gap: '6px'
+              }}>
+                <FaLock size={12} />
+                {nbOccupes} occupé(s)
+              </span>
+            )}
             {saving && (
               <span style={{ color: '#999', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <FaSave size={13} /> Enregistrement...
@@ -248,6 +285,39 @@ export default function Disponibilites({ enseignant }) {
                   </td>
                   {jours.map((jour) => {
                     const coche = estCoche(jour, creneau.debut, creneau.fin)
+                    const occupe = estOccupe(jour, creneau.debut, creneau.fin)
+
+                    // CRÉNEAU OCCUPÉ PAR UN AUTRE ENSEIGNANT
+                    if (occupe) {
+                      return (
+                        <td
+                          key={`${jour}-${creneau.debut}`}
+                          style={{
+                            padding: '10px', textAlign: 'center',
+                            backgroundColor: '#f0f0f0',
+                            cursor: 'not-allowed',
+                            borderBottom: '1px solid #e0e0e0',
+                          }}
+                          title={`Pris par ${occupe.nom_enseignant}`}
+                        >
+                          <div style={{
+                            display: 'flex', flexDirection: 'column',
+                            alignItems: 'center', gap: '4px'
+                          }}>
+                            <FaLock size={16} color="#bbb" />
+                            <span style={{ 
+                              fontSize: '10px', color: '#999', 
+                              maxWidth: '80px', overflow: 'hidden',
+                              textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                            }}>
+                              {occupe.nom_enseignant}
+                            </span>
+                          </div>
+                        </td>
+                      )
+                    }
+
+                    // CRÉNEAU LIBRE OU MON CRÉNEAU
                     return (
                       <td
                         key={`${jour}-${creneau.debut}`}
@@ -286,10 +356,13 @@ export default function Disponibilites({ enseignant }) {
           fontSize: '13px', color: '#666'
         }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <FaCheckCircle size={16} color="#388e3c" /> Disponible
+            <FaCheckCircle size={16} color="#388e3c" /> Mon créneau
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid #ccc' }} /> Non renseigné
+            <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid #ccc' }} /> Libre
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <FaLock size={14} color="#bbb" /> Pris par un autre enseignant
           </span>
           <span>Astuce : cliquez sur un jour ou un créneau pour tout cocher/décocher</span>
         </div>

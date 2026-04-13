@@ -833,5 +833,22 @@ def repondre_demande_inscription(request, id_demande):
     demande.message_reponse = request.data.get("message_reponse", "")
     demande.date_reponse = timezone.now()
     demande.save()
+    
+@api_view(['GET'])
+def get_all_creneaux_occupes(request):
+    disponibilites = Disponibilite.objects.select_related('id_enseignant').all()
+    
+    data = []
+    for d in disponibilites:
+        data.append({
+            'id_disponibilite': d.id_disponibilite,
+            'id_enseignant': d.id_enseignant.id_enseignant if d.id_enseignant else None,
+            'nom_enseignant': f"{d.id_enseignant.prenom} {d.id_enseignant.nom}" if d.id_enseignant else "Inconnu",
+            'jour': d.jour,
+            'heure_debut': str(d.heure_debut),
+            'heure_fin': str(d.heure_fin),
+        })
+    
+    return Response(data, status=status.HTTP_200_OK)
 
     return Response(DemandeInscriptionSerializer(demande).data)

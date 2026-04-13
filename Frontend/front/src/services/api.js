@@ -156,6 +156,12 @@ export async function apiSupprimerDisponibilite(idDispo) {
   return true
 }
 
+export async function getCreneauxOccupes() {
+  const res = await fetch(`${API_URL}/creneaux-occupes/`)
+  if (!res.ok) throw new Error('Erreur lors du chargement des créneaux occupés')
+  return await res.json()
+}
+
 // ========== SALLES CRUD ==========
 
 export async function apiAjouterSalle(data) {
