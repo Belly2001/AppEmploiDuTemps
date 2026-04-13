@@ -6,7 +6,6 @@ from django.utils import timezone
 from django.db import models
 from datetime import time, date, timedelta
 
-
 from .models import Enseignant, Salle, Cours, EmploiDuTemps, Notification, Administrateur, Disponibilite, Demande, Formation, Matiere, EnseignantMatiere, DemandeInscription
 from .serializers import (
     EnseignantSerializer, SalleSerializer, CoursSerializer,
@@ -834,21 +833,78 @@ def repondre_demande_inscription(request, id_demande):
     demande.date_reponse = timezone.now()
     demande.save()
     
+
+
 @api_view(['GET'])
 def get_all_creneaux_occupes(request):
-    disponibilites = Disponibilite.objects.select_related('id_enseignant').all()
+    """
+    Retourne les créneaux occupés uniquement par les enseignants
+    qui sont dans la MÊME formation que l'enseignant demandé.
     
-    data = []
-    for d in disponibilites:
-        data.append({
-            'id_disponibilite': d.id_disponibilite,
-            'id_enseignant': d.id_enseignant.id_enseignant if d.id_enseignant else None,
-            'nom_enseignant': f"{d.id_enseignant.prenom} {d.id_enseignant.nom}" if d.id_enseignant else "Inconnu",
-            'jour': d.jour,
-            'heure_debut': str(d.heure_debut),
-            'heure_fin': str(d.heure_fin),
-        })
+    Usage : GET /schedule/creneaux-occupes/?enseignant_id=5
     
-    return Response(data, status=status.HTTP_200_OK)
+    Logique :
+    1. On récupère l'ID de l'enseignant connecté
+    2. On trouve dans quelle(s) formation(s) il est inscrit
+    3. On récupère tous les enseignants de ces mêmes formations
+    4. On retourne uniquement les disponibilités de ces enseignants
+    """
+    enseignant_id = request.GET.get('enseignant_id')
+    
+    if not enseignant_id:
+        # Si pas d'ID fourni, retourner une liste vide (sécurité)
+        return Response([], status=status.HTTP_200_OK)
+    
+    try:
+        # Étape 1 : Trouver les matières de cet enseignant
+        matieres_enseignant = EnseignantMatiere.objects.filter(
+            id_enseignant=enseignant_id
+        ).values_list('id_matiere', flat=True)
+        
+        if not matieres_enseignant:
+            # L'enseignant n'a pas encore choisi de matières
+            return Response([], status=status.HTTP_200_OK)
+        
+        # Étape 2 : Trouver les formations liées à ces matières
+        from .models import Matiere
+        formations_ids = Matiere.objects.filter(
+            id_matiere__in=matieres_enseignant
+        ).values_list('id_formation', flat=True).distinct()
+        
+        if not formations_ids:
+            return Response([], status=status.HTTP_200_OK)
+        
+        # Étape 3 : Trouver tous les enseignants dans ces mêmes formations
+        matieres_formations = Matiere.objects.filter(
+            id_formation__in=formations_ids
+        ).values_list('id_matiere', flat=True)
+        
+        enseignants_meme_formation = EnseignantMatiere.objects.filter(
+            id_matiere__in=matieres_formations
+        ).values_list('id_enseignant', flat=True).distinct()
+        
+        # Étape 4 : Récupérer les disponibilités de ces enseignants uniquement
+        disponibilites = Disponibilite.objects.select_related('id_enseignant').filter(
+            id_enseignant__in=enseignants_meme_formation
+        )
+        
+        data = []
+        for d in disponibilites:
+            data.append({
+                'id_disponibilite': d.id_disponibilite,
+                'id_enseignant': d.id_enseignant.id_enseignant if d.id_enseignant else None,
+                'nom_enseignant': f"{d.id_enseignant.prenom} {d.id_enseignant.nom}" if d.id_enseignant else "Inconnu",
+                'jour': d.jour,
+                'heure_debut': str(d.heure_debut),
+                'heure_fin': str(d.heure_fin),
+            })
+        
+        return Response(data, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
 
     return Response(DemandeInscriptionSerializer(demande).data)

@@ -33,7 +33,7 @@ export default function Disponibilites({ enseignant }) {
       setChargement(true)
       const [mesDispos, tousLesCreneaux] = await Promise.all([
         getDisponibilites(enseignant.id),
-        getCreneauxOccupes()
+        getCreneauxOccupes(enseignant.id)
       ])
       setDisponibilites(mesDispos)
       // Filtrer pour ne garder que les créneaux des AUTRES enseignants

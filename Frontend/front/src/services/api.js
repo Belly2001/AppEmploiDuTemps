@@ -156,8 +156,8 @@ export async function apiSupprimerDisponibilite(idDispo) {
   return true
 }
 
-export async function getCreneauxOccupes() {
-  const res = await fetch(`${API_URL}/creneaux-occupes/`)
+export async function getCreneauxOccupes(idEnseignant) {
+  const res = await fetch(`${API_URL}/creneaux-occupes/?enseignant_id=${idEnseignant}`)
   if (!res.ok) throw new Error('Erreur lors du chargement des créneaux occupés')
   return await res.json()
 }
