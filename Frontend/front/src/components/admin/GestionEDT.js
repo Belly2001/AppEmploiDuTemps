@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import styles from '@/styles/Admin.module.css'
 import { getDepartements, getFormationsByDepartement, getEDTFormation } from '@/services/api'
-import { FaCalendarAlt, FaArrowLeft, FaChalkboardTeacher, FaDoorOpen, FaClock } from 'react-icons/fa'
+import { FaCalendarAlt, FaArrowLeft, FaChalkboardTeacher, FaDoorOpen, FaClock, FaDownload } from 'react-icons/fa'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 export default function GestionEDT() {
 
@@ -89,6 +91,128 @@ export default function GestionEDT() {
     return edtData.cours.find(c => c.jour === jour && c.heure_debut === creneau.debut)
   }
 
+  // ============ TÉLÉCHARGEMENT PDF ADMIN ============
+  const telechargerPDF = () => {
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+
+    // Couleurs
+    const bleuFonce = [26, 26, 46]
+    const blanc = [255, 255, 255]
+
+    const nomFormation = edtData.formation.nom_formation || 'Formation'
+    const niveau = edtData.formation.niveau || ''
+
+    // En-tête
+    doc.setFillColor(...bleuFonce)
+    doc.rect(0, 0, 297, 35, 'F')
+    doc.setTextColor(...blanc)
+    doc.setFontSize(18)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`Emploi du Temps — ${nomFormation}`, 15, 15)
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'normal')
+    doc.text(`${deptSelectionne || ''} — ${niveau}`, 15, 24)
+
+    // Date
+    const dateStr = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+    doc.setFontSize(9)
+    doc.text(`Généré le ${dateStr}`, 250, 24)
+
+    // Stats
+    const nbCours = edtData.cours.length
+    const nbCM = edtData.cours.filter(c => c.type_cours === 'CM').length
+    const nbTD = edtData.cours.filter(c => c.type_cours === 'TD').length
+    const nbTP = edtData.cours.filter(c => c.type_cours === 'TP').length
+    doc.setTextColor(100, 100, 100)
+    doc.setFontSize(10)
+    doc.text(`Total : ${nbCours} cours  |  CM : ${nbCM}  |  TD : ${nbTD}  |  TP : ${nbTP}`, 15, 43)
+
+    // Tableau
+    const tableData = creneaux.map((creneau) => {
+      const row = [creneau.label]
+      jours.forEach((jour) => {
+        const c = getCoursForSlot(jour, creneau)
+        if (c) {
+          row.push(`${c.matiere || 'Cours'}\n${c.type_cours}\n${c.enseignant || '—'}\n${c.salle || '—'}`)
+        } else {
+          row.push('')
+        }
+      })
+      return row
+    })
+
+    autoTable(doc, {
+      startY: 48,
+      head: [['Créneaux', ...jours]],
+      body: tableData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: bleuFonce,
+        textColor: blanc,
+        fontStyle: 'bold',
+        fontSize: 10,
+        halign: 'center',
+        cellPadding: 4,
+      },
+      bodyStyles: {
+        fontSize: 7.5,
+        cellPadding: 4,
+        valign: 'middle',
+        minCellHeight: 22,
+      },
+      columnStyles: {
+        0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 35, halign: 'center' },
+        1: { halign: 'center' },
+        2: { halign: 'center' },
+        3: { halign: 'center' },
+        4: { halign: 'center' },
+        5: { halign: 'center' },
+      },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
+      didParseCell: function (data) {
+        if (data.section === 'body' && data.column.index > 0 && data.cell.raw) {
+          const text = data.cell.raw
+          if (text.includes('CM')) {
+            data.cell.styles.fillColor = [227, 242, 253]
+            data.cell.styles.textColor = [21, 101, 192]
+          } else if (text.includes('TD')) {
+            data.cell.styles.fillColor = [255, 243, 224]
+            data.cell.styles.textColor = [230, 81, 0]
+          } else if (text.includes('TP')) {
+            data.cell.styles.fillColor = [232, 245, 233]
+            data.cell.styles.textColor = [46, 125, 50]
+          }
+        }
+      },
+      margin: { left: 15, right: 15 },
+    })
+
+    // Liste des enseignants
+    const enseignants = [...new Set(edtData.cours.map(c => c.enseignant).filter(Boolean))]
+    if (enseignants.length > 0) {
+      const finalY = doc.lastAutoTable.finalY + 10
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(26, 26, 46)
+      doc.text('Enseignants concernés :', 15, finalY)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(9)
+      doc.setTextColor(100, 100, 100)
+      doc.text(enseignants.join('  •  '), 15, finalY + 6)
+    }
+
+    // Pied de page
+    const pageHeight = doc.internal.pageSize.height
+    doc.setFontSize(8)
+    doc.setTextColor(150, 150, 150)
+    doc.text('Schedule APP — Système de gestion des emplois du temps', 15, pageHeight - 8)
+    doc.text('app-emploi-du-temps.vercel.app', 250, pageHeight - 8)
+
+    // Télécharger
+    const nomFichier = `EDT_${nomFormation.replace(/\s+/g, '_')}_${deptSelectionne || ''}.pdf`
+    doc.save(nomFichier)
+  }
+
   if (chargement) {
     return <div style={{ textAlign: 'center', padding: '50px', color: '#666' }}>Chargement...</div>
   }
@@ -165,9 +289,29 @@ export default function GestionEDT() {
       {/* VUE EDT */}
       {vue === 'edt' && edtData && (
         <div>
-          <button onClick={retour} className={`${styles.button} ${styles.buttonSecondary}`} style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <FaArrowLeft size={14} /> Retour aux formations
-          </button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+            <button onClick={retour} className={`${styles.button} ${styles.buttonSecondary}`} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <FaArrowLeft size={14} /> Retour aux formations
+            </button>
+
+            {edtData.cours.length > 0 && (
+              <button
+                onClick={telechargerPDF}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '10px 20px', backgroundColor: '#1a1a2e', color: 'white',
+                  border: 'none', borderRadius: '8px', cursor: 'pointer',
+                  fontSize: '14px', fontWeight: '600',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#2d2d5e'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#1a1a2e'}
+              >
+                <FaDownload size={14} />
+                Télécharger l'EDT
+              </button>
+            )}
+          </div>
 
           {edtData.cours.length === 0 ? (
             <div className={styles.card} style={{ textAlign: 'center', padding: '50px' }}>
